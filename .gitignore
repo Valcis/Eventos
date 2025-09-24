@@ -1,11 +1,31 @@
-/tmp
-/out-tsc
+# Dependencias y builds
+node_modules/
+dist/
+.build/
+.cache/
+out/
+.next/
+coverage/
 
-/node_modules
+# Herramientas/IDE
+.vscode/
+.idea/
+.DS_Store
+
+# Entornos/secretos
+.env
+.env.*
+!.env.example
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-/.pnp
-.pnp.js
+pnpm-debug.log*
+*.log
 
-.vscode/*
+# Tipos/artefactos
+*.tsbuildinfo
+
+# Vite
+vite.config.ts.timestamp-*
