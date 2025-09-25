@@ -17,10 +17,11 @@ export default function Resumen() {
     [ubicacionesCrud.items, eventoId]
   );
 
-  const summary = useMemo(
-    () => calcularResumen({ gastos, reservas, ubicacion }),
-    [gastos, reservas, ubicacion]
-  );
+  // Construimos los parámetros evitando pasar propiedades opcionales como undefined (exactOptionalPropertyTypes)
+  const summary = useMemo(() => {
+    const params = ubicacion ? { gastos, reservas, ubicacion } : { gastos, reservas };
+    return calcularResumen(params);
+  }, [gastos, reservas, ubicacion]);
 
   return (
     <section className="grid grid-cols-1 md:grid-cols-3 gap-4">

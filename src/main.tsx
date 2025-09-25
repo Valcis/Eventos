@@ -9,7 +9,7 @@ import './styles/index.css';
 import Home from './pages/Home';
 import Reservas from './evento/Reservas';
 import Selectores from './evento/Selectores';
-import Resumen from './pages/evento/Resumen';
+import Resumen from './evento/Resumen';
 
 const router = createBrowserRouter([
     {
