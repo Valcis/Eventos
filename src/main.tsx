@@ -10,6 +10,7 @@ import Home from './pages/Home';
 import Reservas from './evento/Reservas';
 import Selectores from './evento/Selectores';
 import Resumen from './evento/Resumen';
+import Ubicaciones from './evento/Ubicaciones';
 
 const router = createBrowserRouter([
     {
@@ -23,6 +24,7 @@ const router = createBrowserRouter([
                 children: [
                     { index: true, element: <Resumen /> },
                     { path: 'reservas', element: <Reservas /> },
+                    { path: 'ubicaciones', element: <Ubicaciones /> },
                     { path: 'selectores', element: <Selectores /> },
                 ],
             },

@@ -50,7 +50,7 @@ export default function DataTable<TData>({
   return (
     <div className="card overflow-auto">
       <div className="p-2">
-        <DataTableToolbar table={table} placeholder={globalFilterPlaceholder} />
+        <DataTableToolbar table={table} {...(globalFilterPlaceholder !== undefined ? { placeholder: globalFilterPlaceholder } : {})} />
       </div>
       <table className="table">
         <thead>

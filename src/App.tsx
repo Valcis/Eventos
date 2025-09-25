@@ -6,6 +6,7 @@ function EventTabs() {
     const tabs = [
         {to: `/eventos/${id}`, label: 'Resumen', end: true as const},
         {to: `/eventos/${id}/reservas`, label: 'Reservas'},
+        {to: `/eventos/${id}/ubicaciones`, label: 'Ubicaciones'},
         {to: `/eventos/${id}/selectores`, label: 'Selectores'},
     ];
     return (
