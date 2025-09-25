@@ -1,0 +1,31 @@
+bien ahora quiero que prestes atencion a como quiero desarrollar este proyecto.
+Tal y como esta ahora, el nivel visual ya me parece optimo (no incido en acabados sino en funcionalidad y versatilidad)
+sobre lo que hay quiero que profundicemos las paginas.
+* Resumen-> de momento lo dejamos muy parecido , Gasto acumulado (total de gastos de pestaña Gastos), Reservas confirmadas (total de cada plato , parrilas y picarones, del tab Reservas), Aforo disponible.
+* Reservas -> tabla con los sig encabezados : Cliente, Parrilladas,Picarones, Tipo de consumo, Punto de Recogida (desplegable que se monta con la lista del tab de Ubicaciones), metodo de pago, Receptor, total Pedido, Pagado, Comprobado.
+algunas celdas son valores que se deben calcular automaticamente segun los valores de configuracion del tab Precios , ya profundizaremos, pero ten lo en cuanta para delegar responsabilidades (componentes smart o dummy),
+* Ubicaciones / Recogida -> Tabla con cabeceras : Nombre, Direccion, Telefono, Horario, Comentarios, Habilitado. en el tab reservas mandamos un selector con toda esta lista de nombres que habilitado es true.
+* Gastos -> Tabla con cabeceras cuando la tabla esta en modo detallado:
+Producto,Unidad, Cantidad, Tipo de precio,	Tipo IVA (%), Base (sin IVA), IVA (€), Total con IVA,¿Pack?,Unidades en pack, Precio por unidad, Pagador, Tienda, Notas, Comprobado. Ademas de un ultimo casillero donde pondre iconos de edicion, borrado y bloqueo (desabilito edicio) de cada fila.
+Ademas debe haber un boton para añadir nuevo registro/producto, el cual debe mostrar un modal con los campos necesarios para crear un nuevo registro.
+Otro boton para decidir el tipo de vista de la tabla (simple / detallada), siendo simple la vista por defecto. cabeceras para vista simple:
+Producto, Unidad, Cantidad, Total con IVA,¿Pack?,Unidades en pack, Precio por unidad, Pagador, Tienda, Notas, Comprobado. Ademas de un ultimo casillero donde pondre iconos de edicion, borrado y bloqueo (desabilito edicio) de cada fila.
+* Proveedores de momento lo dejamos igual
+* Precios -> tabla con las sig cabeceras : Concepto , importe, Acciones (Edicion, borrado y bloqueo)
+* Balance , este tab ya lo desarrolaremos en profundidad mas adelante porque hace muchos calculos de info que recopila del resto de tabs.
+
+Todas las tablas deben tener la opcion de ordenar asc/desc de sus campos (en el header), paginacion con numero claro de la pagina actual, selector de paginacion, filtros por columna.
+de momento me gustaria desarrollar toda esta estructura. si no has entendido algo o es ambiguo preguntamelo y lo aclaro.
+quiero que me devuelvas la nueva estructura del proyecto con estas modificaciones.
+En cuanto te de el ok me gustaria empezar a desarrollarlo apoyandome en ti y en Junie por lo que me gustaria que me hagas un plan de ejecucion y las tareas para cada uno de los implicado
+
+algunas directrices:
+- no uses alias (a) para imports
+- evita el tipo any
+
+
+
+
+
+
+
