@@ -24,6 +24,7 @@ const ubicaciones: Ubicacion[] = [
         direccion: 'C/ Mayor 1',
         habilitado: true,
         capacidad: 500,
+        locked: false,
         createdAt: now('2025-01-01'),
         updatedAt: now('2025-01-01'),
         isActive: true
@@ -36,6 +37,7 @@ const precios: Precio[] = [
         eventoId: 'e1',
         concepto: 'parrilladas',
         importe: 12,
+        locked: false,
         createdAt: now('2025-02-01'),
         updatedAt: now('2025-02-01'),
         isActive: true
@@ -45,6 +47,7 @@ const precios: Precio[] = [
         eventoId: 'e1',
         concepto: 'picarones',
         importe: 6,
+        locked: false,
         createdAt: now('2025-02-01'),
         updatedAt: now('2025-02-01'),
         isActive: true

@@ -41,6 +41,7 @@ export interface Ubicacion extends BaseEntity {
     comentarios?: string;
     habilitado: boolean;
     capacidad?: number;
+    locked: boolean;
 }
 
 export interface Gasto extends BaseEntity {
@@ -73,6 +74,7 @@ export interface Precio extends BaseEntity {
     eventoId: ID;
     concepto: 'parrilladas' | 'picarones' | string;
     importe: number;
+    locked?: boolean;
 }
 
 export type SelectorCategoria = 'tipoConsumo' | 'metodoPago' | 'receptor' | 'puntoRecogida';
