@@ -11,7 +11,6 @@ export default function Asistentes() {
   const { id } = useParams<{ id: string }>()
   const { items, create, update, remove } = useCrud<Asistente>('asistentes')
   const data = items.filter(a => a.eventoId === id)
-
   const [isOpen, setIsOpen] = useState(false)
   const [editing, setEditing] = useState<Asistente | null>(null)
 

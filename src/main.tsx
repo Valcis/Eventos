@@ -7,12 +7,12 @@ import './styles/index.css';
 
 // Páginas
 import Home from './pages/Home';
-import Reservas from './evento/Reservas';
-import Selectores from './evento/Selectores';
-import Resumen from './evento/Resumen';
-import Ubicaciones from './evento/Ubicaciones';
-import Precios from './evento/Precios';
-import Gastos from './evento/Gastos';
+import Reservas from './pages/evento/Reservas';
+import Selectores from './pages/evento/Selectores';
+import Resumen from './pages/evento/Resumen';
+import Ubicaciones from './pages/evento/Ubicaciones';
+import Precios from './pages/evento/Precios';
+import Gastos from './pages/evento/Gastos';
 
 const router = createBrowserRouter([
     {

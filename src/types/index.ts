@@ -86,3 +86,19 @@ export interface Selector extends BaseEntity {
     habilitado: boolean;
     orden: number;
 }
+
+export interface Asistente {
+    id: string;          // o number, según tu store
+    isActive: boolean
+    eventoId: string;
+    nombre: string;
+    email?: string;
+    telefono?: string;
+    notas?: string;
+    // flags:
+    confirmado?: boolean;
+    vip?: boolean;
+    // timestamps (si aplican):
+    createdAt: string;
+    updatedAt: string;
+}
