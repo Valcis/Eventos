@@ -1,8 +1,8 @@
 // src/main.tsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App, { EventLayout } from './App';
+import {createBrowserRouter, RouterProvider} from 'react-router-dom';
+import App, {EventLayout} from './App';
 import './styles/index.css';
 
 // Páginas
@@ -17,19 +17,19 @@ import Gastos from './pages/evento/Gastos';
 const router = createBrowserRouter([
     {
         path: '/',
-        element: <App />,
+        element: <App/>,
         children: [
-            { index: true, element: <Home /> },
+            {index: true, element: <Home/>},
             {
                 path: 'eventos/:id',
-                element: <EventLayout />,
+                element: <EventLayout/>,
                 children: [
-                    { index: true, element: <Resumen /> },
-                    { path: 'reservas', element: <Reservas /> },
-                    { path: 'ubicaciones', element: <Ubicaciones /> },
-                    { path: 'precios', element: <Precios /> },
-                    { path: 'gastos', element: <Gastos /> },
-                    { path: 'selectores', element: <Selectores /> },
+                    {index: true, element: <Resumen/>},
+                    {path: 'reservas', element: <Reservas/>},
+                    {path: 'ubicaciones', element: <Ubicaciones/>},
+                    {path: 'precios', element: <Precios/>},
+                    {path: 'gastos', element: <Gastos/>},
+                    {path: 'selectores', element: <Selectores/>},
                 ],
             },
         ],
@@ -38,6 +38,6 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <RouterProvider router={router} />
+        <RouterProvider router={router} future={{v7_startTransition: true}}/>
     </React.StrictMode>
 );
