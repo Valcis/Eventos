@@ -5,6 +5,7 @@ import DataTable from '../../components/ui/DataTable';
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
 import { useCrud } from '../../lib/crud';
+import { precioSchema } from '../../lib/validators/schemas';
 import type { Precio } from '../../types';
 import { preciosColumns } from '../../lib/tables/precios.columns';
 
@@ -63,18 +64,22 @@ export default function Precios() {
     const concepto = String(fd.get('concepto') ?? '').trim();
     const importe = Number(fd.get('importe') ?? 0);
 
-    if (!concepto) { alert('Concepto requerido'); return; }
-    if (Number.isNaN(importe)) { alert('Importe inválido'); return; }
-
     // Validar existencia/alta de “parrilladas” y “picarones”: permitir crear si faltan, evitar duplicados por evento
     const existeDuplicado = rows.some(p => p.concepto.toLowerCase() === concepto.toLowerCase() && (!editing || p.id !== editing.id));
     if (existeDuplicado) { alert('Ya existe un precio con ese concepto'); return; }
 
+    const parsed = precioSchema.safeParse({ eventoId, concepto, importe, locked: false });
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      alert(first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación.');
+      return;
+    }
+
     if (editing) {
-      crud.update(editing.id, { concepto, importe });
+      crud.update(editing.id, { concepto: parsed.data.concepto, importe: parsed.data.importe });
     } else {
       // locked: false explícito para evitar undefined en exactOptionalPropertyTypes
-      crud.create({ eventoId, concepto, importe, locked: false });
+      crud.create(parsed.data as any);
     }
     setOpen(false);
     setEditing(null);

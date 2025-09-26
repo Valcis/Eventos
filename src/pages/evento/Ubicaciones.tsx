@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCrud } from '../../lib/crud';
+import { ubicacionSchema } from '../../lib/validators/schemas';
 import type { Ubicacion } from '../../types';
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
@@ -39,11 +40,20 @@ export default function Ubicaciones() {
       ...(comentariosEntry && String(comentariosEntry) !== '' ? { comentarios: String(comentariosEntry) } : {}),
     } as const;
 
+    const parsed = ubicacionSchema.safeParse(base);
+    if (!parsed.success) {
+      const first = parsed.error.issues[0];
+      alert(first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación.');
+      return;
+    }
+
+    const payload = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => v !== undefined)) as Partial<Ubicacion>;
+
     if (editing) {
       // update respetando exactOptionalPropertyTypes: solo incluimos propiedades presentes
-      crud.update(editing.id, { ...base });
+      crud.update(editing.id, payload);
     } else {
-      crud.create({ ...base });
+      crud.create(payload as any);
     }
 
     setOpen(false);

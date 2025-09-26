@@ -39,39 +39,43 @@ export function useCrud<T extends BaseEntity>(name: TableName) {
 
 export const schemas = {
     evento: z.object({
-        nombre: z.string().min(1),
-        fecha: z.string().min(1),
-        ubicacionId: z.string().optional(),
-        presupuesto: z.coerce.number().nonnegative()
+        nombre: z.string().trim().min(1).max(120),
+        fecha: z.string().trim().min(1),
+        ubicacionId: z.string().trim().min(1).optional().transform(v => (v === '' ? undefined : v)),
+        presupuesto: z.coerce.number().nonnegative(),
     }),
     asistente: z.object({
-        nombre: z.string().min(1),
-        email: z.string().email(),
-        telefono: z.string().optional(),
-        eventoId: z.string().optional(),
-        checkedIn: z.coerce.boolean().optional()
+        nombre: z.string().trim().min(1).max(60),
+        email: z.string().trim().email().optional().transform(v => (v === '' ? undefined : v)),
+        telefono: z.string().trim().max(30).optional().transform(v => (v === '' ? undefined : v)),
+        eventoId: z.string().trim().min(1).optional(),
+        // flags are handled elsewhere; keep schema minimal and normalized
     }),
     ubicacion: z.object({
-        nombre: z.string().min(1),
-        direccion: z.string().min(1),
-        capacidad: z.coerce.number().int().nonnegative()
+        nombre: z.string().trim().min(1).max(120),
+        direccion: z.string().trim().min(1).max(200),
+        capacidad: z.coerce.number().int().nonnegative(),
     }),
-    proveedor: z.object({nombre: z.string().min(1), categoria: z.string().min(1), contacto: z.string().optional()}),
+    proveedor: z.object({
+        nombre: z.string().trim().min(1).max(120),
+        categoria: z.string().trim().min(1).max(80),
+        contacto: z.string().trim().max(120).optional().transform(v => (v === '' ? undefined : v)),
+    }),
     entrada: z.object({
         eventoId: z.string().min(1),
-        tipo: z.string().min(1),
+        tipo: z.string().trim().min(1).max(60),
         precio: z.coerce.number().nonnegative(),
-        disponibles: z.coerce.number().int().nonnegative()
+        disponibles: z.coerce.number().int().nonnegative(),
     }),
     gasto: z.object({
         eventoId: z.string().min(1),
-        categoria: z.string().min(1),
+        categoria: z.string().trim().min(1).max(60),
         monto: z.coerce.number().nonnegative(),
-        notas: z.string().optional()
+        notas: z.string().trim().max(500).optional().transform(v => (v === '' ? undefined : v)),
     }),
     precio: z.object({
         eventoId: z.string().min(1),
-        concepto: z.string().min(1),
-        importe: z.coerce.number().nonnegative()
+        concepto: z.string().trim().min(1).max(120),
+        importe: z.coerce.number().nonnegative(),
     }),
 }

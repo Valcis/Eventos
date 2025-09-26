@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCrud } from '../../lib/crud';
+import { reservaSchema } from '../../lib/validators/schemas';
 import type { BaseEntity, Precio, Reserva, Ubicacion, Selector } from '../../types';
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
@@ -60,15 +61,19 @@ export default function Reservas() {
             totalPedido: 0,
         } as const;
 
-        // Aseguramos el tipo final sin introducir undefined
-        const data: ReservaInput = obj as unknown as ReservaInput;
-
+        // Calcula total con precios del evento
         const total = calcularTotalPedido(
-            { parrilladas: data.parrilladas, picarones: data.picarones },
+            { parrilladas: obj.parrilladas, picarones: obj.picarones },
             precios
         );
 
-        reservasCrud.create({ ...data, totalPedido: total });
+        const parsed = reservaSchema.safeParse({ ...obj, totalPedido: total });
+        if (!parsed.success) {
+            const first = parsed.error.issues[0];
+            alert(first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación.');
+            return;
+        }
+        reservasCrud.create(parsed.data as any);
         setOpen(false);
     }
 

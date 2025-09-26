@@ -10,6 +10,8 @@ import {calcularGasto} from '../../lib/calculations/gastos';
 import {gastosColumnsSimple} from '../../lib/tables/gastos.columns.simple';
 import {gastosColumnsDetailed} from '../../lib/tables/gastos.columns.detailed';
 import {getGastosView, setGastosView, type GastosView} from '../../lib/view/views';
+import { GastoUpsertSchema } from '../../lib/validators';
+import { formatCurrency } from '../../lib/format';
 
 export default function Gastos() {
     const {id: eventoId} = useParams<{ id: string }>();
@@ -21,9 +23,9 @@ export default function Gastos() {
     const [editing, setEditing] = useState<Gasto | null>(null);
     const [view, setView] = useState<GastosView>(() => (eventoId ? getGastosView(eventoId) : 'simple'));
 
-    const columns = useMemo<ColumnDef<Gasto, any>[]>(() => {
+    const columns = useMemo<ColumnDef<Gasto, unknown>[]>(() => {
         const base = view === 'simple' ? gastosColumnsSimple() : gastosColumnsDetailed();
-        const actions: ColumnDef<Gasto, any> = {
+        const actions: ColumnDef<Gasto, unknown> = {
             id: 'actions',
             header: 'Acciones',
             cell: ({row}) => {
@@ -117,10 +119,18 @@ export default function Gastos() {
             ...(String(fd.get('notas') ?? '') !== '' ? {notas: String(fd.get('notas'))} : {}),
         } as const;
 
+        const parsed = GastoUpsertSchema.safeParse(baseObj);
+        if (!parsed.success) {
+            const first = parsed.error.issues[0];
+            const msg = first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación en el formulario.';
+            alert(msg);
+            return;
+        }
+        const payload = parsed.data as typeof baseObj;
         if (editing) {
-            crud.update(editing.id, {...baseObj});
+            crud.update(editing.id, { ...payload });
         } else {
-            crud.create({...baseObj});
+            crud.create({ ...payload });
         }
 
         setOpen(false);
@@ -140,7 +150,7 @@ export default function Gastos() {
             <div className="card p-4 flex items-center justify-between">
                 <div>
                     <div className="text-sm text-gray-500">Gasto acumulado</div>
-                    <div className="text-2xl font-semibold">{gastoAcum.toFixed(2)} €</div>
+                    <div className="text-2xl font-semibold">{formatCurrency(gastoAcum)}</div>
                 </div>
                 <div className="flex items-center gap-2">
                     <span className="text-sm">Vista:</span>

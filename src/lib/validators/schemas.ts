@@ -32,6 +32,7 @@ export const ubicacionSchema = z.object({
   comentarios: z.string().optional(),
   habilitado: z.coerce.boolean().default(true),
   capacidad: z.coerce.number().int().nonnegative().optional(),
+  locked: z.coerce.boolean().default(false),
 });
 
 export const gastoSchema = z.object({

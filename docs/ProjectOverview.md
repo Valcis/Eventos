@@ -228,3 +228,9 @@ Este documento describe la organización funcional y técnica del proyecto segú
 ---
 
 ¿Doy inicio con Sprint 1 (tipos, schemas, DataTable y Selectores + Reservas base) y abro las primeras tareas en issues?
+
+
+## Validación y formato (implementación inicial)
+- Validadores por entidad en src/lib/validators/ (iniciado con gastos.ts). Se usan esquemas Zod y tipos inferidos.
+- Normalización de inputs (trim y límites) a través de los esquemas.
+- Formateo centralizado en src/lib/format.ts (moneda EUR y números con 2/4 decimales). Tablas de Gastos usan estos helpers.
