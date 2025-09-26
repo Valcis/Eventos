@@ -34,7 +34,7 @@ export function useCrud<T extends BaseEntity>(name: TableName) {
         refresh();
     };
 
-    return { items, create, update, remove, refresh };
+    return {items, create, update, remove, refresh};
 }
 
 export const schemas = {
