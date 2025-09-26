@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ColumnDef } from '@tanstack/react-table'
-import DataTable from '../../components/DataTable'
+import DataTable from '../../components/ui/DataTable/'
 import Modal from '../../components/Modal'
 import FormField from '../../components/FormField'
 import { schemas, useCrud } from '../../lib/crud'

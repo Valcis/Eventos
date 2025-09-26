@@ -6,7 +6,7 @@ interface Props<TData> {
   placeholder?: string;
 }
 
-export default function DataTableToolbar<TData>({ table, placeholder = 'Buscar…' }: Props<TData>) {
+export default function Toolbar<TData>({ table, placeholder = 'Buscar…' }: Props<TData>) {
   const { globalFilter } = table.getState();
 
   return (

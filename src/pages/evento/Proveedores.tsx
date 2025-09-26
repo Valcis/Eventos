@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ColumnDef } from '@tanstack/react-table'
-import DataTable from '../../components/DataTable'
+import DataTable from '../../components/ui/DataTable'
 import Modal from '../../components/Modal'
 import FormField from '../../components/FormField'
 import { schemas, useCrud } from '../../lib/crud'
@@ -35,7 +35,7 @@ export default function Proveedores() {
         <h3 className="font-semibold">Proveedores</h3>
         <button className="btn btn-primary" onClick={() => { setEditing(null); setIsOpen(true) }}>Añadir</button>
       </div>
-      <DataTable columns={columns} data={data} onEdit={(r)=>{setEditing(r);setIsOpen(true)}} onDelete={(r)=>remove(r.id)} />
+      {/*<DataTable columns={columns} data={data} onEdit={(r)=>{setEditing(r);setIsOpen(true)}} onDelete={(r)=>remove(r.id)} />*/}
       <Modal title={editing ? 'Editar proveedor' : 'Añadir proveedor'} isOpen={isOpen} onClose={()=>{setIsOpen(false);setEditing(null)}}>
         <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={onSubmit}>
           <FormField label="Nombre"><input className="input" name="nombre" defaultValue={editing?.nombre ?? ''} /></FormField>
