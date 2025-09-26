@@ -7,6 +7,8 @@ function EventTabs() {
         {to: `/eventos/${id}`, label: 'Resumen', end: true as const},
         {to: `/eventos/${id}/reservas`, label: 'Reservas'},
         {to: `/eventos/${id}/ubicaciones`, label: 'Ubicaciones'},
+        {to: `/eventos/${id}/precios`, label: 'Precios'},
+        {to: `/eventos/${id}/gastos`, label: 'Gastos'},
         {to: `/eventos/${id}/selectores`, label: 'Selectores'},
     ];
     return (

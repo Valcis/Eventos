@@ -11,6 +11,8 @@ import Reservas from './evento/Reservas';
 import Selectores from './evento/Selectores';
 import Resumen from './evento/Resumen';
 import Ubicaciones from './evento/Ubicaciones';
+import Precios from './evento/Precios';
+import Gastos from './evento/Gastos';
 
 const router = createBrowserRouter([
     {
@@ -25,6 +27,8 @@ const router = createBrowserRouter([
                     { index: true, element: <Resumen /> },
                     { path: 'reservas', element: <Reservas /> },
                     { path: 'ubicaciones', element: <Ubicaciones /> },
+                    { path: 'precios', element: <Precios /> },
+                    { path: 'gastos', element: <Gastos /> },
                     { path: 'selectores', element: <Selectores /> },
                 ],
             },
