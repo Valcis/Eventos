@@ -23,12 +23,6 @@
     "src"
   ],
   "exclude": [
-    "src/pages/evento/Asistentes.tsx",
-    "src/pages/evento/Balance.tsx",
-    "src/pages/evento/Gastos.tsx",
-    "src/pages/evento/Precios.tsx",
-    "src/pages/evento/Proveedores.tsx",
-    "src/pages/evento/Ubicaciones.tsx",
-    "src/pages/evento/Resumen.tsx"
+    "dist", "node_modules"
   ]
 }
