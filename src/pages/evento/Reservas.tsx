@@ -1,11 +1,11 @@
 // src/evento/Reservas.tsx
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { useCrud } from '../lib/crud';
-import type { BaseEntity, Precio, Reserva, Ubicacion, Selector } from '../types';
-import Modal from '../components/Modal';
-import FormField from '../components/FormField';
-import { calcularTotalPedido } from '../lib/calculations/reservas';
+import { useCrud } from '../../lib/crud';
+import type { BaseEntity, Precio, Reserva, Ubicacion, Selector } from '../../types';
+import Modal from '../../components/Modal';
+import FormField from '../../components/FormField';
+import { calcularTotalPedido } from '../../lib/calculations/reservas';
 
 export default function Reservas() {
     const { id: eventoId } = useParams<{ id: string }>();
