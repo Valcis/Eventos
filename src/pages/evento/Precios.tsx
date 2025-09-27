@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {DataTable} from '../../components/ui/DataTable';
 import type {SortState} from '../../components/ui/DataTable/types';
 import Pagination from '../../components/ui/DataTable/Pagination';
@@ -17,19 +17,12 @@ const MIN_ROWS_FOR_PAGINATION = 6; // aparece paginación si hay > 5 filas
 export default function Precios() {
 // TODO: Integrar con fuente real de datos. Por ahora, array vacío para no romper.
     const [rows] = useState<PrecioItem[]>([]);
-
-
-// Estado de filtros controlados por FilterBar
     const [filters, setFilters] = useState<FilterValues>({});
-
-
-// Estado de orden
     const [sort, setSort] = useState<SortState>({columnId: null, direction: null});
-
-
-// Estado de paginación
+    const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false); // por defecto ocultos
     const [page, setPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(10);
+
     // Definición de campos filtrables (se puede mover a config si se reutiliza fuera)
     const filterFields = useMemo<FilterField<PrecioItem>[]>(
         () => [
@@ -110,30 +103,53 @@ export default function Precios() {
 
 
 // Reset de página al cambiar filtros/orden
-    React.useEffect(() => setPage(1), [filters, sort]);
-
+    useEffect(() => setPage(1), [filters, sort]);
 
     const shouldShowPagination = filtered.length >= MIN_ROWS_FOR_PAGINATION;
 
     return (
         <div className="space-y-4">
-            {/* Filtro opcional: en Precios sí lo usamos */}
+            {/* Toolbar con título + botón para mostrar/ocultar filtros */}
+
             <FilterBar<PrecioItem>
+                title="Filtros de Precios"
                 fields={effectiveFields}
                 values={filters}
                 onChange={setFilters}
                 isInline
+                isCollapsible
+                isOpen={isFiltersOpen}
+                onToggle={setIsFiltersOpen}
             />
 
 
-            <DataTable<PrecioItem>
-                rows={paged}
-                columns={preciosColumns}
-                sort={sort}
-                onSortChange={setSort}
-                emptyState={<span>No hay precios que coincidan con los filtros.</span>}
-            />
+            {/* Card de la tabla */}
+            <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+                    <h3 className="text-base font-semibold text-zinc-800">
+                        Precios <span className="text-sm font-normal text-zinc-500">({filtered.length})</span>
+                    </h3>
+                    <button
+                        type="button"
+                        className="text-sm px-3 py-2 rounded-xl border border-indigo-500 text-indigo-600 hover:bg-indigo-50"
+                        onClick={() => {
+                            // Llama aquí a tu modal existente
+                            // ej: openPrecioModal();
+                        }}
+                    >
+                        Crear
+                    </button>
+                </div>
 
+                <DataTable<PrecioItem>
+                    rows={paged}
+                    columns={preciosColumns}
+                    sort={sort}
+                    onSortChange={setSort}
+                    emptyState={<span>No hay precios que coincidan con los filtros.</span>}
+                />
+
+            </div>
 
             {shouldShowPagination && (
                 <Pagination
@@ -142,8 +158,9 @@ export default function Precios() {
                     total={filtered.length}
                     onPageChange={setPage}
                     onPageSizeChange={setPageSize}
-                />)
-            }
+                />
+            )}
         </div>
     );
+
 }
