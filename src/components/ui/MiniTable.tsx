@@ -1,8 +1,7 @@
 import * as React from "react";
 
-
 export type MiniTableProps<T> = {
-    columns: string[]; // cabeceras visibles
+    columns: string[]; // cabeceras visibles (incluye "Activo" si aplica)
     rows: T[];
     renderCell: (column: string, row: T) => React.ReactNode;
     renderActions?: (row: T) => React.ReactNode; // celda acciones a la derecha
@@ -10,28 +9,26 @@ export type MiniTableProps<T> = {
     density?: "compact" | "normal"; // densidad de filas
 };
 
-
 export default function MiniTable<T>({
                                          columns,
                                          rows,
                                          renderCell,
                                          renderActions,
                                          maxRows = 6,
-                                         density = "compact"
+                                         density = "compact",
                                      }: MiniTableProps<T>): JSX.Element {
     const headPy = density === "compact" ? "py-0.5" : "py-1";
-    const cellPy = density === "compact" ? "py-0.5" : "py-1.5"; // ⬅️ aún más compacto
+    const cellPy = density === "compact" ? "py-0.5" : "py-1.5";
     const pr = density === "compact" ? "pr-3" : "pr-4";
-    const gap = density === "compact" ? "gap-0.5" : "gap-2"; // ⬅️ iconos más juntos
-
+    const gap = density === "compact" ? "gap-0.5" : "gap-2";
 
     return (
         <table className="w-full text-sm">
             <thead>
             <tr className="text-left text-gray-600">
-                {columns.map((c) =>
+                {columns.map((c) => (
                     <th key={c} className={`${headPy} ${pr}`}>{c === "Activo" ? "" : c}</th>
-                )}
+                ))}
                 {renderActions && <th className={`${headPy} pr-2 text-right`}>Acciones</th>}
             </tr>
             </thead>

@@ -8,7 +8,7 @@ type IconButtonProps = {
     isDisabled?: boolean;
     className?: string;
     children: React.ReactNode; // icon
-    size?: "sm" | "md";        // 👈 NUEVO
+    size?: "xs" | "sm" | "md"; // xs = ultra-compacto
 };
 
 export default function IconButton({
@@ -19,9 +19,9 @@ export default function IconButton({
                                        isDisabled = false,
                                        className = "",
                                        children,
-                                       size = "sm",              // 👈 por defecto compacto
+                                       size = "xs",
                                    }: IconButtonProps): JSX.Element {
-    const pad = size === "sm" ? "p-1" : "p-2 md:p-2.5"; // 👈 menos padding en sm
+    const pad = size === "xs" ? "p-0.5" : size === "sm" ? "p-1" : "p-2 md:p-2.5";
     return (
         <button
             type={type}

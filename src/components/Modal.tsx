@@ -1,6 +1,6 @@
 import * as React from "react";
-import { useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import {useEffect, useRef} from "react";
+import {X} from "lucide-react";
 
 type ModalProps = {
     title: string;
@@ -73,18 +73,13 @@ export default function Modal({
             <div
                 ref={dialogRef}
                 tabIndex={-1}
-                className="relative z-10 w-[min(92vw,720px)] max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 outline-none
-                   transition-transform duration-150 ease-out"
-                onMouseDown={(e) => e.stopPropagation()} // evita que burbujeen clicks al backdrop
+                className="relative z-10 w-[min(92vw,720px)] max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 outline-none transition-transform duration-150 ease-out"
+                onMouseDown={(e) => e.stopPropagation()} // evita cierre al clicar dentro
             >
-                {/* Header visualmente separado + botón X */}
-                <div className="sticky top-0 z-10 flex items-center justify-between gap-3
-                        rounded-t-2xl border-b bg-white/95 px-4 py-3
-                        backdrop-blur supports-[backdrop-filter]:bg-white/80">
-                    <h2 id="modal-title" className="text-base md:text-lg font-semibold">
-                        {title}
-                    </h2>
-
+                {/* Header separado + botón X */}
+                <div
+                    className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-2xl border-b bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+                    <h2 id="modal-title" className="text-base md:text-lg font-semibold">{title}</h2>
                     <button
                         type="button"
                         aria-label="Cerrar"
@@ -92,7 +87,7 @@ export default function Modal({
                         onClick={onClose}
                         className="rounded-xl border p-1.5 transition-transform hover:scale-105 focus:outline-none focus:ring"
                     >
-                        <X size={16} />
+                        <X size={16}/>
                     </button>
                 </div>
 
