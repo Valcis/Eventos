@@ -6,20 +6,28 @@ import {
     PagadorSchema,
     TiendaSchema,
     UnidadSchema,
-    TipoPrecioSchema,
-    TipoConsumoSchema,
     BenefBizumSchema,
     PuntoRecogidaSchema,
 } from "../../lib/validators/selectores";
 
-export type FieldKind = "text" | "checkbox" | "textarea";
+// Esquema libre para Tipo de consumo (sin restricciones)
+const TipoConsumoFreeSchema = z.object({
+    id: z.string(),
+    nombre: z.string().min(1, "Requerido"),
+    notas: z.string().optional(),
+    activo: z.boolean(),
+});
+
+export type FieldKind = "text" | "checkbox" | "textarea" | "select";
 
 export type FieldSpec = {
     key: string;       // nombre, telefono, etc.
     label: string;
     type: FieldKind;
     optional?: boolean;
-    showInTable?: boolean; // si debe aparecer como columna (además de Nombre; Activo va siempre en tabla pero sin encabezado visible)
+    showInTable?: boolean; // (solo informativo)
+    fullWidth?: boolean;   // ocupa ancho completo del modal
+    options?: Array<{ label: string; value: string | number | boolean }>;
 };
 
 export type SelectorConfig = {
@@ -30,32 +38,23 @@ export type SelectorConfig = {
 };
 
 export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
-    comerciales: {
-        title: "Comerciales",
-        tableColumns: ["Activo", "Nombre"], // Teléfono oculto en tabla
+    unidades: {
+        title: "Unidades",
+        tableColumns: ["Activo", "Nombre"], // Abreviatura oculta
         fields: [
             {key: "nombre", label: "Nombre", type: "text"},
-            {key: "telefono", label: "Teléfono", type: "text", optional: true},
-            {key: "notas", label: "Notas", type: "text", optional: true},
+            {key: "abreviatura", label: "Abreviatura", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
-        schema: ComercialSchema,
-    },
-    metodosPago: {
-        title: "Métodos de pago",
-        tableColumns: ["Activo", "Nombre", "Requiere receptor"],
-        fields: [
-            {key: "nombre", label: "Nombre", type: "text"},
-            {key: "requiereReceptor", label: "Requiere receptor", type: "checkbox"},
-            {key: "notas", label: "Notas", type: "text", optional: true},
-        ],
-        schema: MetodoPagoSchema,
+        schema: UnidadSchema,
     },
     pagadores: {
         title: "Pagadores",
         tableColumns: ["Activo", "Nombre"],
         fields: [
             {key: "nombre", label: "Nombre", type: "text"},
-            {key: "notas", label: "Notas", type: "text", optional: true},
+            {key: "telefono", label: "Teléfono", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
         schema: PagadorSchema,
     },
@@ -66,47 +65,28 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
             {key: "nombre", label: "Nombre", type: "text"},
             {key: "direccion", label: "Dirección", type: "text", optional: true},
             {key: "horario", label: "Horario", type: "text", optional: true},
-            {key: "notas", label: "Notas", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
         schema: TiendaSchema,
     },
-    unidades: {
-        title: "Unidades",
-        tableColumns: ["Activo", "Nombre"], // Abreviatura oculta en tabla
+    comerciales: {
+        title: "Comerciales / Captadores",
+        tableColumns: ["Activo", "Nombre"], // Teléfono oculto
         fields: [
             {key: "nombre", label: "Nombre", type: "text"},
-            {key: "abreviatura", label: "Abreviatura", type: "text", optional: true},
-            {key: "notas", label: "Notas", type: "text", optional: true},
+            {key: "telefono", label: "Teléfono", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
-        schema: UnidadSchema,
-    },
-    tiposPrecio: {
-        title: "Tipos de precio",
-        tableColumns: ["Activo", "Nombre"],
-        fields: [
-            {key: "nombre", label: "Nombre", type: "text"},
-            {key: "notas", label: "Notas", type: "text", optional: true},
-        ],
-        schema: TipoPrecioSchema,
+        schema: ComercialSchema,
     },
     tipoConsumo: {
         title: "Tipo de consumo",
         tableColumns: ["Activo", "Nombre"],
         fields: [
             {key: "nombre", label: "Nombre", type: "text"},
-            {key: "notas", label: "Notas", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
-        schema: TipoConsumoSchema,
-    },
-    benefBizum: {
-        title: "Receptor/Cobrador",
-        tableColumns: ["Activo", "Nombre"],
-        fields: [
-            {key: "nombre", label: "Nombre", type: "text"},
-            {key: "telefono", label: "Teléfono", type: "text", optional: true},
-            {key: "notas", label: "Notas", type: "text", optional: true},
-        ],
-        schema: BenefBizumSchema,
+        schema: TipoConsumoFreeSchema, // sin restricciones
     },
     puntosRecogida: {
         title: "Puntos de recogida",
@@ -115,8 +95,36 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
             {key: "nombre", label: "Nombre", type: "text"},
             {key: "direccion", label: "Dirección", type: "text", optional: true},
             {key: "horario", label: "Horario", type: "text", optional: true},
-            {key: "comentarios", label: "Comentarios", type: "textarea", optional: true},
+            {key: "comentarios", label: "Notas", type: "text", optional: true, fullWidth: true},
         ],
         schema: PuntoRecogidaSchema,
+    },
+    metodosPago: {
+        title: "Métodos de pago",
+        tableColumns: ["Activo", "Nombre", "Requiere receptor"],
+        fields: [
+            {key: "nombre", label: "Nombre", type: "text"},
+            {
+                key: "requiereReceptor",
+                label: "Requiere receptor",
+                type: "select",
+                options: [
+                    {label: "Sí", value: true},
+                    {label: "No", value: false},
+                ],
+            },
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
+        ],
+        schema: MetodoPagoSchema,
+    },
+    benefBizum: {
+        title: "Receptor / Cobrador",
+        tableColumns: ["Activo", "Nombre"],
+        fields: [
+            {key: "nombre", label: "Nombre", type: "text"},
+            {key: "telefono", label: "Teléfono", type: "text", optional: true},
+            {key: "notas", label: "Notas", type: "text", optional: true, fullWidth: true},
+        ],
+        schema: BenefBizumSchema,
     },
 };

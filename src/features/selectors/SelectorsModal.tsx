@@ -3,7 +3,7 @@ import {useEffect, useMemo, useState} from "react";
 import Modal from "../../components/Modal";
 import FormField from "../../components/FormField";
 import type {SelectorKind, BaseItem} from "../../types/selectores";
-import {SELECTOR_CONFIG} from "./config";
+import {SELECTOR_CONFIG, type FieldSpec} from "./config";
 import {z} from "zod";
 import {upsertSelector} from "../../store/localdb";
 
@@ -62,49 +62,171 @@ export default function SelectorsModal({
         onSaved(data);
     };
 
+    // submit con Enter
+    const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+        e.preventDefault();
+        handleAccept();
+    };
+
+    // ---------- helpers de presentación ----------
+    const isNotasKey = (key: string) => key === "notas" || key === "comentarios";
+    const notasLen = (key: string) => String((val[key] as string | undefined) ?? "").length;
+
+    const prettyValue = (f: FieldSpec | { key: "activo"; label: string }): string => {
+        const raw = val[f.key as keyof RowBase];
+        if (f.key === "activo") return (raw as boolean) ? "Sí" : "No";
+        if (typeof raw === "boolean") return raw ? "Sí" : "No";
+        const s = String((raw as string | number | undefined) ?? "");
+        return s.trim() === "" ? "—" : s;
+    };
+
+    const SelectWrapper: React.FC<{ children: React.ReactNode }> = ({children}) => (
+        <div className="relative">
+            {children}
+            <span
+                className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none text-gray-400">⌄</span>
+        </div>
+    );
+
+    const renderEditableField = (f: FieldSpec): JSX.Element => {
+        const common = {disabled: isReadOnly};
+
+        // “Notas” / “Comentarios” => ancho completo + max 250 + contador
+        if (isNotasKey(f.key)) {
+            const len = notasLen(f.key);
+            return (
+                <>
+                    <input
+                        className="input w-full"
+                        value={String((val[f.key] as string | undefined) ?? "")}
+                        onChange={(e) => onChange(f.key, e.target.value.slice(0, 250))}
+                        maxLength={250}
+                        {...common}
+                    />
+                    <div className="mt-1 text-right text-xs text-gray-400">{len}/250</div>
+                </>
+            );
+        }
+
+        if (f.type === "select") {
+            const current = (val[f.key] as boolean | string | number | undefined);
+            const asString = String(current ?? "");
+            const first = f.options?.[0];
+            const isBoolSelect = typeof first?.value === "boolean";
+            return (
+                <SelectWrapper>
+                    <select
+                        className="input w-full appearance-none bg-white pr-8"
+                        value={asString}
+                        onChange={(e) => {
+                            const next = isBoolSelect ? (e.target.value === "true") : e.target.value;
+                            onChange(f.key, next);
+                        }}
+                        {...common}
+                    >
+                        {f.options?.map((o) => (
+                            <option key={String(o.value)} value={String(o.value)}>
+                                {o.label}
+                            </option>
+                        ))}
+                    </select>
+                </SelectWrapper>
+            );
+        }
+
+        if (f.type === "checkbox") {
+            return (
+                <input
+                    type="checkbox"
+                    checked={Boolean(val[f.key])}
+                    onChange={(e) => onChange(f.key, e.target.checked)}
+                    {...common}
+                />
+            );
+        }
+
+        return (
+            <input
+                className="input w-full"
+                value={String((val[f.key] as string | undefined) ?? "")}
+                onChange={(e) => onChange(f.key, e.target.value)}
+                {...common}
+            />
+        );
+    };
+
+    // ---------- read-only compacto con Notas en segunda línea ----------
+    const InlineInfo: React.FC = () => {
+        const fieldsNoNotes = cfg.fields.filter((f) => !isNotasKey(f.key));
+        const notesField = cfg.fields.find((f) => isNotasKey(f.key));
+
+        return (
+            <>
+                <div className="rounded-xl border bg-gray-50 px-3 py-2">
+                    {/* Línea 1: Activo + resto de campos (sin Notas) */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-5">
+                        <div className="flex items-baseline">
+                            <span className="text-gray-500">Activo:</span>
+                            <span className="ml-1 font-medium text-gray-800">{val.activo ? "Sí" : "No"}</span>
+                        </div>
+                        {fieldsNoNotes.map((f, idx) => (
+                            <div key={f.key} className="flex items-baseline">
+                                <span className="text-gray-500">{f.label}:</span>
+                                <span className="ml-1 font-medium text-gray-800" title={prettyValue(f)}>
+                                 {prettyValue(f)}
+                            </span>
+                                {idx < fieldsNoNotes.length - 1 && <span className="mx-2 text-gray-300">•</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+                <div className="rounded-xl border bg-gray-50 px-3 py-2 mt-3">
+                    {/* Línea 2: Notas (si existe) */}
+                    {notesField && (
+                        <div className="">
+                            <div className="text-[11px] font-medium leading-4 text-gray-500">{notesField.label}</div>
+                            <div className="mt-0.5 text-[14px] leading-5 text-gray-800 whitespace-pre-wrap break-words">
+                                {prettyValue(notesField)}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </>
+        );
+    };
+
     return (
         <Modal title={title} isOpen={isOpen} onClose={onClose}>
-            <div className="grid gap-3 md:grid-cols-2">
-                {cfg.fields.map((f) => (
-                    <FormField key={f.key} label={f.label}>
-                        {f.type === "text" && (
-                            <input
-                                className="input"
-                                value={String((val[f.key] as string | undefined) ?? "")}
-                                onChange={(e) => onChange(f.key, e.target.value)}
-                                disabled={isReadOnly}
-                            />
-                        )}
-                        {f.type === "textarea" && (
-                            <textarea
-                                className="input"
-                                value={String((val[f.key] as string | undefined) ?? "")}
-                                onChange={(e) => onChange(f.key, e.target.value)}
-                                disabled={isReadOnly}
-                            />
-                        )}
-                        {f.type === "checkbox" && (
-                            <input
-                                type="checkbox"
-                                checked={Boolean(val[f.key])}
-                                onChange={(e) => onChange(f.key, e.target.checked)}
-                                disabled={isReadOnly}
-                            />
-                        )}
-                    </FormField>
-                ))}
-            </div>
+            <form onSubmit={onSubmit}>
+                {isReadOnly ? <InlineInfo/> : (
+                    <>
+                        <div className="grid gap-3 md:grid-cols-2">
+                            {cfg.fields.map((f) => (
+                                <div key={f.key} className={f.fullWidth ? "md:col-span-2" : ""}>
+                                    <FormField label={f.label}>{renderEditableField(f)}</FormField>
+                                </div>
+                            ))}
+                        </div>
 
-            <div className="mt-4 flex items-center justify-end gap-2">
-                <button className="rounded-2xl border px-3 py-1.5" onClick={onClose}>
-                    {isReadOnly ? "Cerrar" : "Cancelar"}
-                </button>
-                {!isReadOnly && (
-                    <button className="rounded-2xl border px-3 py-1.5" onClick={handleAccept}>
-                        Guardar
-                    </button>
+                        <div className="mt-4 flex items-center justify-end gap-2">
+                            <button type="button" className="rounded-2xl border px-3 py-1.5" onClick={onClose}>
+                                Cancelar
+                            </button>
+                            <button type="submit" className="rounded-2xl border px-3 py-1.5">
+                                Guardar
+                            </button>
+                        </div>
+                    </>
                 )}
-            </div>
+
+                {isReadOnly && (
+                    <div className="mt-3 flex items-center justify-end">
+                        <button type="button" className="rounded-2xl border px-3 py-1.5" onClick={onClose}>
+                            Cerrar
+                        </button>
+                    </div>
+                )}
+            </form>
         </Modal>
     );
 }

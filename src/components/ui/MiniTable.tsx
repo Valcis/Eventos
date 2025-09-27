@@ -19,28 +19,28 @@ export default function MiniTable<T>({
                                      }: MiniTableProps<T>): JSX.Element {
     const headPy = density === "compact" ? "py-0.5" : "py-1";
     const cellPy = density === "compact" ? "py-0.5" : "py-1.5";
-    const pr = density === "compact" ? "pr-3" : "pr-4";
+    const px = density === "compact" ? "px-3" : "px-4";
     const gap = density === "compact" ? "gap-0.5" : "gap-2";
 
     return (
-        <table className="w-full text-sm">
+        <table className="w-full text-sm text-center">
             <thead>
-            <tr className="text-left text-gray-600">
+            <tr className="text-gray-600">
                 {columns.map((c) => (
-                    <th key={c} className={`${headPy} ${pr}`}>{c === "Activo" ? "" : c}</th>
+                    <th key={c} className={`${headPy} ${px}`}>{c === "Activo" ? "" : c}</th>
                 ))}
-                {renderActions && <th className={`${headPy} pr-2 text-right`}>Acciones</th>}
+                {renderActions && <th className={`${headPy} ${px}`}>{/* Acciones centrado sin texto */}</th>}
             </tr>
             </thead>
             <tbody>
             {rows.slice(0, maxRows).map((row, i) => (
                 <tr key={String((row as unknown as { id?: string }).id ?? i)} className="border-t">
                     {columns.map((c) => (
-                        <td key={c} className={`${cellPy} ${pr}`}>{renderCell(c, row)}</td>
+                        <td key={c} className={`${cellPy} ${px}`}>{renderCell(c, row)}</td>
                     ))}
                     {renderActions && (
-                        <td className={`${cellPy} pr-2`}>
-                            <div className={`flex justify-end ${gap}`}>{renderActions(row)}</div>
+                        <td className={`${cellPy} ${px}`}>
+                            <div className={`mx-auto inline-flex ${gap}`}>{renderActions(row)}</div>
                         </td>
                     )}
                 </tr>
