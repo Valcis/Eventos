@@ -1,102 +1,105 @@
 import React from 'react';
-import {
-    ColumnDef,
-    flexRender,
-    getCoreRowModel,
-    getSortedRowModel,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    SortingState,
-    ColumnFiltersState,
-    useReactTable,
-} from '@tanstack/react-table';
-import Pagination from './Pagination';
-import Toolbar from './Toolbar';
+import type {ColumnDef, SortState} from './types';
 
-export interface DataTableProps<TData> {
-    columns: ColumnDef<TData, any>[];
-    data: TData[];
-    pageSizeOptions?: number[];
-    globalFilterPlaceholder?: string;
+
+export interface DataTableProps<T> {
+    rows?: T[];
+    columns?: ColumnDef<T>[];
+    sort?: SortState;
+    onSortChange?: (next: SortState) => void;
+    emptyState?: React.ReactNode;
+    className?: string;
+    hideHeader?: boolean;
 }
 
-export default function Index<TData>({
-                                             columns,
-                                             data,
-                                             pageSizeOptions = [5, 10, 20, 50],
-                                             globalFilterPlaceholder,
-                                         }: DataTableProps<TData>) {
-    const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-    const [globalFilter, setGlobalFilter] = React.useState<string>('');
+/**
+ * Presentational generic table. Sorting is handled by parent; headers just emit `onSortChange`.
+ */
+export function DataTable<T>({
+                                 rows, columns, sort = {columnId: null, direction: null},
+                                 onSortChange, emptyState, className, hideHeader = false,
+                             }: DataTableProps<T>) {
 
-    const table = useReactTable({
-        data,
-        columns,
-        state: {
-            sorting,
-            columnFilters,
-            globalFilter,
-        },
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        onGlobalFilterChange: setGlobalFilter,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-    });
+    const safeRows = rows ?? [];
+    const safeCols = columns ?? [];
+    const headerCellCls = 'px-4 py-3 text-sm font-semibold text-zinc-700 select-none';
+    const cellBase = 'px-4 py-3 text-sm text-zinc-800';
+    const tableCls = 'w-full border border-zinc-200 rounded-2xl overflow-hidden bg-white';
+
+    function toggleSort(colId: string, isSortable?: boolean) {
+        if (!isSortable) return;
+        const isSame = sort.columnId === colId;
+        const nextDirection: SortState['direction'] = !isSame
+            ? 'asc'
+            : sort.direction === 'asc'
+                ? 'desc'
+                : sort.direction === 'desc'
+                    ? null
+                    : 'asc';
+        onSortChange?.({columnId: nextDirection ? colId : null, direction: nextDirection});
+    }
 
     return (
-        <div className="card overflow-auto">
-            <div className="p-2">
-                <Toolbar
-                    table={table} {...(globalFilterPlaceholder !== undefined ? {placeholder: globalFilterPlaceholder} : {})} />
-            </div>
-            <table className="table">
-                <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                    <tr key={headerGroup.id}>
-                        {headerGroup.headers.map(header => {
-                            const canSort = header.column.getCanSort();
-                            const sorted = header.column.getIsSorted();
-                            return (
-                                <th key={header.id} colSpan={header.colSpan}>
-                                    {header.isPlaceholder ? null : (
-                                        <button
-                                            type="button"
-                                            className={`flex items-center gap-1 ${canSort ? 'cursor-pointer select-none' : ''}`}
-                                            onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
-                                        >
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
-                                            {sorted === 'asc' && ' ▲'}
-                                            {sorted === 'desc' && ' ▼'}
-                                        </button>
-                                    )}
-                                </th>
-                            );
-                        })}
-                    </tr>
-                ))}
-                </thead>
-                <tbody>
-                {table.getRowModel().rows.map(row => (
-                    <tr key={row.id}>
-                        {row.getVisibleCells().map(cell => (
-                            <td key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                        ))}
-                    </tr>
-                ))}
-                {table.getRowModel().rows.length === 0 && (
-                    <tr>
-                        <td colSpan={columns.length} className="text-center text-gray-500 p-4">Sin datos</td>
-                    </tr>
-                )}
-                </tbody>
-            </table>
-            <div className="p-2">
-                <Pagination table={table} pageSizeOptions={pageSizeOptions}/>
+        <div className={className}>
+            <div className="overflow-x-auto">
+                <table className={tableCls}>
+                    {!hideHeader && (
+                        <thead className="bg-zinc-50">
+                        <tr>
+                            {safeCols.map((c) => {      // <- usar safeCols
+                                const id = String(c.id);
+                                const isActive = sort.columnId === id && !!sort.direction;
+                                const ariaSort = isActive ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none';
+                                return (
+                                    <th
+                                        key={id}
+                                        // ...
+                                        onClick={() => toggleSort(id, c.isSortable)}
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <span>{c.header}</span>
+                                            {c.isSortable && (
+                                                <span className="text-xs text-zinc-500" aria-hidden>
+                            {isActive ? (sort.direction === 'asc' ? '▲' : '▼') : '↕'}
+                          </span>
+                                            )}
+                                        </div>
+                                    </th>
+                                );
+                            })}
+                        </tr>
+                        </thead>
+                    )}
+                    <tbody>
+                    {safeRows.length === 0 && (
+                        <tr>
+                            <td colSpan={safeCols.length || 1} className={`${cellBase} text-center`}>
+                                {emptyState ?? 'No hay resultados'}
+                            </td>
+                        </tr>
+                    )}
+                    {safeRows.map((row, idx) => (
+                        <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-zinc-50/60'}>
+                            {safeCols.map((c) => {
+                                const id = String(c.id);
+                                const rawValue = c.accessor ? c.accessor(row) : (row as any)[c.id as keyof T];
+                                const content = c.cell ? c.cell(rawValue, row) : (rawValue as React.ReactNode);
+                                return (
+                                    <td key={id}
+                                        className={`${cellBase} ${c.align === 'center' ? 'text-center' : c.align === 'right' ? 'text-right' : 'text-left'}`}
+                                        style={{width: c.width}}>
+                                        {content}
+                                    </td>
+                                );
+                            })}
+                        </tr>
+                    ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
+
 }
+
+export default DataTable;

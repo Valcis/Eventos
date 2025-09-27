@@ -1,121 +1,149 @@
-import { useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import type { ColumnDef } from '@tanstack/react-table';
-import DataTable from '../../components/ui/DataTable';
-import Modal from '../../components/Modal';
-import FormField from '../../components/FormField';
-import { useCrud } from '../../lib/crud';
-import { precioSchema } from '../../lib/validators/schemas';
-import type { Precio } from '../../types';
-import { preciosColumns } from '../../lib/tables/precios.columns';
+import React, {useMemo, useState} from 'react';
+import {DataTable} from '../../components/ui/DataTable';
+import type {SortState} from '../../components/ui/DataTable/types';
+import Pagination from '../../components/ui/DataTable/Pagination';
+import FilterBar from '../../components/ui/FilterBar/FilterBar';
+import type {FilterValues, FilterField} from '../../components/ui/FilterBar/types';
+import {defaultCompare, getDirectionMultiplier, stableSort} from '../../lib/utils';
+import {preciosColumns, type PrecioItem} from '../../lib/tables/precios.columns';
 
+
+const MIN_ROWS_FOR_PAGINATION = 6; // aparece paginación si hay > 5 filas
+
+
+/**
+ * Vista del tab "Precios" (capa visual). Los datos se inyectan localmente o por futura integración.
+ */
 export default function Precios() {
-  const { id: eventoId } = useParams<{ id: string }>();
-  const crud = useCrud<Precio>('precios');
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Precio | null>(null);
+// TODO: Integrar con fuente real de datos. Por ahora, array vacío para no romper.
+    const [rows] = useState<PrecioItem[]>([]);
 
-  const rows = useMemo(() => crud.items.filter(p => p.eventoId === eventoId), [crud.items, eventoId]);
 
-  const columns = useMemo<ColumnDef<Precio, any>[]>(() => {
-    const base = preciosColumns();
-    const actions: ColumnDef<Precio, any> = {
-      id: 'actions',
-      header: 'Acciones',
-      cell: ({ row }) => {
-        const r = row.original;
-        const bloqueado = r.locked === true;
-        return (
-          <div className="flex gap-2">
-            <button
-              className="btn btn-sm"
-              onClick={() => crud.update(r.id, { locked: !Boolean(r.locked) })}
-              title={bloqueado ? 'Desbloquear' : 'Bloquear'}
-            >
-              {bloqueado ? '🔓' : '🔒'}
-            </button>
-            <button
-              className="btn btn-sm"
-              onClick={() => { if (!bloqueado) { setEditing(r); setOpen(true); } }}
-              disabled={bloqueado}
-            >
-              Editar
-            </button>
-            <button
-              className="btn btn-sm"
-              onClick={() => { if (!bloqueado) crud.remove(r.id); }}
-              disabled={bloqueado}
-            >
-              Borrar
-            </button>
-          </div>
-        );
-      },
-      enableSorting: false,
-      enableColumnFilter: false,
-    };
-    return [...base, actions];
-  }, [crud]);
+// Estado de filtros controlados por FilterBar
+    const [filters, setFilters] = useState<FilterValues>({});
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!eventoId) return;
-    const fd = new FormData(e.currentTarget);
-    const concepto = String(fd.get('concepto') ?? '').trim();
-    const importe = Number(fd.get('importe') ?? 0);
 
-    // Validar existencia/alta de “parrilladas” y “picarones”: permitir crear si faltan, evitar duplicados por evento
-    const existeDuplicado = rows.some(p => p.concepto.toLowerCase() === concepto.toLowerCase() && (!editing || p.id !== editing.id));
-    if (existeDuplicado) { alert('Ya existe un precio con ese concepto'); return; }
+// Estado de orden
+    const [sort, setSort] = useState<SortState>({columnId: null, direction: null});
 
-    const parsed = precioSchema.safeParse({ eventoId, concepto, importe, locked: false });
-    if (!parsed.success) {
-      const first = parsed.error.issues[0];
-      alert(first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación.');
-      return;
-    }
 
-    if (editing) {
-      crud.update(editing.id, { concepto: parsed.data.concepto, importe: parsed.data.importe });
-    } else {
-      // locked: false explícito para evitar undefined en exactOptionalPropertyTypes
-      crud.create(parsed.data as any);
-    }
-    setOpen(false);
-    setEditing(null);
-    (e.currentTarget as HTMLFormElement).reset();
-  }
+// Estado de paginación
+    const [page, setPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(10);
+    // Definición de campos filtrables (se puede mover a config si se reutiliza fuera)
+    const filterFields = useMemo<FilterField<PrecioItem>[]>(
+        () => [
+            {id: 'nombre', label: 'Nombre', type: 'text'},
+            {id: 'categoria', label: 'Categoría', type: 'select', options: []},
+            {id: 'moneda', label: 'Moneda', type: 'select', options: []},
+            {id: 'importe', label: 'Importe mínimo', type: 'number'},
+            {id: 'isActivo', label: 'Activo', type: 'boolean'},
+        ],
+        []
+    );
 
-  return (
-    <section className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Precios</h2>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setOpen(true); }}>Añadir</button>
-      </div>
-      <DataTable<Precio>
-        columns={columns}
-        data={rows}
-        globalFilterPlaceholder="Buscar precios…"
-      />
+    // Valores derivados para selects (categoría/moneda) a partir de los datos
+    const dynamicSelects = useMemo(() => {
+        const categorias = Array.from(new Set(rows.map((r) => r.categoria))).sort();
+        const monedas = Array.from(new Set(rows.map((r) => r.moneda))).sort();
+        return {
+            categorias: categorias.map((c) => ({label: c, value: c})),
+            monedas: monedas.map((m) => ({label: m, value: m})),
+        };
+    }, [rows]);
 
-      <Modal title={editing ? 'Editar precio' : 'Nuevo precio'} isOpen={open} onClose={() => { setOpen(false); setEditing(null); }}>
-        <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={onSubmit}>
-          <FormField label="Concepto">
-            <input name="concepto" className="input" defaultValue={editing?.concepto ?? ''} required />
-          </FormField>
-          <FormField label="Importe">
-            <input name="importe" type="number" step="0.01" min={0} className="input" defaultValue={editing?.importe ?? 0} />
-          </FormField>
-          <div className="col-span-full flex justify-end gap-2">
-            <button type="button" className="btn" onClick={() => { setOpen(false); setEditing(null); }}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Guardar</button>
-          </div>
-        </form>
-      </Modal>
+    // Inyectar opciones dinámicas en los fields (sin re-crear referencias)
+    const effectiveFields = useMemo(() =>
+            filterFields.map((f) => {
+                if (f.id === 'categoria') return {...f, options: dynamicSelects.categorias};
+                if (f.id === 'moneda') return {...f, options: dynamicSelects.monedas};
+                return f;
+            }),
+        [filterFields, dynamicSelects]);
 
-      <div className="text-sm text-gray-500">
-        Nota: asegúrate de tener conceptos “parrilladas” y “picarones” para el cálculo de Reservas.
-      </div>
-    </section>
-  );
+    // Pipeline: filtros → orden → paginación
+    const filtered = useMemo(() => {
+        return rows.filter((r) => {
+// nombre (contains)
+            const nombre = String(filters['nombre'] ?? '').trim().toLowerCase();
+            if (nombre && !r.nombre.toLowerCase().includes(nombre)) return false;
+// categoria (equals)
+            const cat = String(filters['categoria'] ?? '');
+            if (cat && r.categoria !== cat) return false;
+// moneda (equals)
+            const mon = String(filters['moneda'] ?? '');
+            if (mon && r.moneda !== mon) return false;
+// importe mínimo (gte)
+            const min = filters['importe'];
+            if (typeof min === 'number' && r.importe < min) return false;
+// activo (equals)
+            const act = filters['isActivo'];
+            if (typeof act === 'boolean' && r.isActivo !== act) return false;
+            return true;
+        });
+    }, [rows, filters]);
+
+    const sorted = useMemo(() => {
+        if (!sort.columnId || !sort.direction) return filtered;
+        const col = preciosColumns.find((c) => String(c.id) === sort.columnId);
+        if (!col) return filtered;
+        const dir = getDirectionMultiplier(sort.direction);
+        return stableSort(filtered, (a, b) => {
+            if (col.sortFn) return col.sortFn(a, b, sort.direction!);
+            const getVal = (row: PrecioItem) =>
+                col.accessor
+                    ? col.accessor(row)
+                    // usamos la id de la columna como key del row
+                    : (row as any)[col.id as keyof PrecioItem];
+
+            const va = getVal(a);
+            const vb = getVal(b);
+
+            return defaultCompare(va, vb) * dir;
+        });
+    }, [filtered, sort]);
+
+    const paged = useMemo(() => {
+        const start = (page - 1) * pageSize;
+        return sorted.slice(start, start + pageSize);
+    }, [sorted, page, pageSize]);
+
+
+// Reset de página al cambiar filtros/orden
+    React.useEffect(() => setPage(1), [filters, sort]);
+
+
+    const shouldShowPagination = filtered.length >= MIN_ROWS_FOR_PAGINATION;
+
+    return (
+        <div className="space-y-4">
+            {/* Filtro opcional: en Precios sí lo usamos */}
+            <FilterBar<PrecioItem>
+                fields={effectiveFields}
+                values={filters}
+                onChange={setFilters}
+                isInline
+            />
+
+
+            <DataTable<PrecioItem>
+                rows={paged}
+                columns={preciosColumns}
+                sort={sort}
+                onSortChange={setSort}
+                emptyState={<span>No hay precios que coincidan con los filtros.</span>}
+            />
+
+
+            {shouldShowPagination && (
+                <Pagination
+                    page={page}
+                    pageSize={pageSize}
+                    total={filtered.length}
+                    onPageChange={setPage}
+                    onPageSizeChange={setPageSize}
+                />)
+            }
+        </div>
+    );
 }

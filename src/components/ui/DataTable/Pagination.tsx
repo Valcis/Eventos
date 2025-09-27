@@ -1,50 +1,72 @@
 import React from 'react';
-import type { Table } from '@tanstack/react-table';
 
-interface Props<TData> {
-  table: Table<TData>;
-  pageSizeOptions?: number[];
+export interface PaginationProps {
+    page: number; // 1-based
+    pageSize: number;
+    total: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange?: (size: number) => void;
+    isCompact?: boolean;
 }
 
-export default function Pagination<TData>({ table, pageSizeOptions = [5, 10, 20, 50] }: Props<TData>) {
-  const pageIndex = table.getState().pagination?.pageIndex ?? 0;
-  const pageCount = table.getPageCount();
+const PAGE_SIZES = [5, 10, 20, 50];
 
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        <button className="btn btn-sm" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-          « Primero
-        </button>
-        <button className="btn btn-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          ‹ Anterior
-        </button>
-        <button className="btn btn-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Siguiente ›
-        </button>
-        <button className="btn btn-sm" onClick={() => table.setPageIndex(pageCount - 1)} disabled={!table.getCanNextPage()}>
-          Último »
-        </button>
-      </div>
-      <div className="flex items-center gap-2">
-        <span>
-          Página <strong>{pageIndex + 1}</strong> de <strong>{pageCount}</strong>
-        </span>
-        <label className="flex items-center gap-1">
-          Tamaño
-          <select
-            className="input"
-            value={table.getState().pagination?.pageSize ?? 10}
-            onChange={e => table.setPageSize(Number(e.target.value))}
-          >
-            {pageSizeOptions.map(pageSize => (
-              <option key={pageSize} value={pageSize}>
-                {pageSize}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-    </div>
-  );
+export function Pagination({
+                               page,
+                               pageSize,
+                               total,
+                               onPageChange,
+                               onPageSizeChange,
+                               isCompact = false
+                           }: PaginationProps) {
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+    const btnCls = 'px-3 py-2 rounded-xl border border-zinc-300 disabled:opacity-50';
+
+
+    return (
+        <div className={`flex items-center justify-between gap-3 ${isCompact ? '' : 'mt-3'}`}>
+            <div className="text-sm text-zinc-600 ">
+                Página <strong>{page}</strong> de <strong>{totalPages}</strong>
+            </div>
+            <div className="flex items-center gap-2">
+                <button className={btnCls}
+                        onClick={() => onPageChange(1)}
+                        disabled={page <= 1}>
+                    «
+                </button>
+                <button className={btnCls}
+                        onClick={() => onPageChange(Math.max(1, page - 1))}
+                        disabled={page <= 1}>
+                    Anterior
+                </button>
+                <button className={btnCls}
+                        onClick={() => onPageChange(Math.min(totalPages, page + 1))}
+                        disabled={page >= totalPages}>
+                    Siguiente
+                </button>
+                <button className={btnCls}
+                        onClick={() => onPageChange(totalPages)}
+                        disabled={page >= totalPages}>
+                    »
+                </button>
+            </div>
+            <div className="flex items-center gap-2">
+                <label className="text-sm">Filas por página</label>
+                <select
+                    className="px-2 py-2 rounded-xl border border-zinc-300"
+                    value={pageSize}
+                    onChange={(e) => onPageSizeChange?.(Number(e.target.value))}
+                >
+                    {PAGE_SIZES.map((s) => (
+                        <option key={s} value={s}>
+                            {s}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    );
 }
+
+export default Pagination;
