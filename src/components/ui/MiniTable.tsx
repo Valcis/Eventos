@@ -7,6 +7,8 @@ export type MiniTableProps<T> = {
     renderActions?: (row: T) => React.ReactNode; // celda acciones a la derecha
     maxRows?: number; // por defecto 6
     density?: "compact" | "normal"; // densidad de filas
+    renderHeader?: (column: string) => React.ReactNode; // 👈 NUEVO: render de cabecera por columna
+    actionsHeader?: React.ReactNode;                    // 👈 NUEVO: cabecera de Acciones
 };
 
 export default function MiniTable<T>({
@@ -16,6 +18,8 @@ export default function MiniTable<T>({
                                          renderActions,
                                          maxRows = 6,
                                          density = "compact",
+                                         renderHeader,
+                                         actionsHeader,
                                      }: MiniTableProps<T>): JSX.Element {
     const headPy = density === "compact" ? "py-0.5" : "py-1";
     const cellPy = density === "compact" ? "py-0.5" : "py-1.5";
@@ -27,9 +31,15 @@ export default function MiniTable<T>({
             <thead>
             <tr className="text-gray-600">
                 {columns.map((c) => (
-                    <th key={c} className={`${headPy} ${px}`}>{c === "Activo" ? "" : c}</th>
+                    <th key={c} className={`${headPy} ${px}`}>
+                        {renderHeader ? renderHeader(c) : c}
+                    </th>
                 ))}
-                {renderActions && <th className={`${headPy} ${px}`}>{/* Acciones centrado sin texto */}</th>}
+                {renderActions && (
+                    <th className={`${headPy} ${px}`}>
+                        {actionsHeader ?? null}
+                    </th>
+                )}
             </tr>
             </thead>
             <tbody>

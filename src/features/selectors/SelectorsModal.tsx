@@ -56,7 +56,8 @@ export default function SelectorsModal({
             alert(parsed.error.errors[0]?.message ?? "Datos inválidos");
             return;
         }
-        const data = parsed.data as RowBase;
+        // 👇 Mezclamos con `val` para conservar campos opcionales no definidos en el schema (telefono/capacidad, etc.)
+        const data = {...val, ...(parsed.data as object)} as RowBase;
         if (!initial) data.activo = true; // crear => activo true
         upsertSelector<RowBase>(eventId, kind, data);
         onSaved(data);
@@ -68,7 +69,7 @@ export default function SelectorsModal({
         handleAccept();
     };
 
-    // ---------- helpers de presentación ----------
+    // ---------- helpers ----------
     const isNotasKey = (key: string) => key === "notas" || key === "comentarios";
     const notasLen = (key: string) => String((val[key] as string | undefined) ?? "").length;
 
@@ -91,7 +92,6 @@ export default function SelectorsModal({
     const renderEditableField = (f: FieldSpec): JSX.Element => {
         const common = {disabled: isReadOnly};
 
-        // “Notas” / “Comentarios” => ancho completo + max 250 + contador
         if (isNotasKey(f.key)) {
             const len = notasLen(f.key);
             return (
@@ -134,6 +134,22 @@ export default function SelectorsModal({
             );
         }
 
+        if (f.type === "number") {
+            const current = (val[f.key] as number | string | undefined);
+            return (
+                <input
+                    className="input w-full"
+                    type="number"
+                    value={current === undefined || current === null ? "" : String(current)}
+                    onChange={(e) => {
+                        const v = e.target.value;
+                        onChange(f.key, v === "" ? undefined : Number(v));
+                    }}
+                    {...common}
+                />
+            );
+        }
+
         if (f.type === "checkbox") {
             return (
                 <input
@@ -155,50 +171,49 @@ export default function SelectorsModal({
         );
     };
 
-    // ---------- read-only compacto con Notas en segunda línea ----------
+    // ---------- read-only con Notas en segunda línea ----------
     const InlineInfo: React.FC = () => {
         const fieldsNoNotes = cfg.fields.filter((f) => !isNotasKey(f.key));
         const notesField = cfg.fields.find((f) => isNotasKey(f.key));
 
         return (
-            <>
-                <div className="rounded-xl border bg-gray-50 px-3 py-2">
-                    {/* Línea 1: Activo + resto de campos (sin Notas) */}
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-5">
-                        <div className="flex items-baseline">
-                            <span className="text-gray-500">Activo:</span>
-                            <span className="ml-1 font-medium text-gray-800">{val.activo ? "Sí" : "No"}</span>
-                        </div>
-                        {fieldsNoNotes.map((f, idx) => (
-                            <div key={f.key} className="flex items-baseline">
-                                <span className="text-gray-500">{f.label}:</span>
-                                <span className="ml-1 font-medium text-gray-800" title={prettyValue(f)}>
-                                 {prettyValue(f)}
-                            </span>
-                                {idx < fieldsNoNotes.length - 1 && <span className="mx-2 text-gray-300">•</span>}
-                            </div>
-                        ))}
+            <div className="rounded-xl border bg-gray-50 px-3 py-2">
+                {/* Línea 1: Activo + resto (sin Notas) */}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] leading-5">
+                    <div className="flex items-baseline">
+                        <span className="text-gray-500">Activo:</span>
+                        <span className="ml-1 font-medium text-gray-800">{val.activo ? "Sí" : "No"}</span>
                     </div>
-                </div>
-                <div className="rounded-xl border bg-gray-50 px-3 py-2 mt-3">
-                    {/* Línea 2: Notas (si existe) */}
-                    {notesField && (
-                        <div className="">
-                            <div className="text-[11px] font-medium leading-4 text-gray-500">{notesField.label}</div>
-                            <div className="mt-0.5 text-[14px] leading-5 text-gray-800 whitespace-pre-wrap break-words">
-                                {prettyValue(notesField)}
-                            </div>
+                    {fieldsNoNotes.map((f, idx) => (
+                        <div key={f.key} className="flex items-baseline">
+                            <span className="text-gray-500">{f.label}:</span>
+                            <span className="ml-1 font-medium text-gray-800" title={prettyValue(f)}>
+                {prettyValue(f)}
+              </span>
+                            {idx < fieldsNoNotes.length - 1 && <span className="mx-2 text-gray-300">•</span>}
                         </div>
-                    )}
+                    ))}
                 </div>
-            </>
+
+                {/* Línea 2: Notas (si existe) */}
+                {notesField && (
+                    <div className="mt-2 rounded-lg border bg-white/70 px-2.5 py-2">
+                        <div className="text-[11px] font-medium leading-4 text-gray-500">{notesField.label}</div>
+                        <div className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-5 text-gray-800">
+                            {prettyValue(notesField)}
+                        </div>
+                    </div>
+                )}
+            </div>
         );
     };
 
     return (
         <Modal title={title} isOpen={isOpen} onClose={onClose}>
             <form onSubmit={onSubmit}>
-                {isReadOnly ? <InlineInfo/> : (
+                {isReadOnly ? (
+                    <InlineInfo/>
+                ) : (
                     <>
                         <div className="grid gap-3 md:grid-cols-2">
                             {cfg.fields.map((f) => (

@@ -1,6 +1,6 @@
 import * as React from "react";
 import {useCallback, useEffect, useState} from "react";
-import {Plus, Info, Pencil, Trash2} from "lucide-react";
+import {Plus, Info, Pencil, Trash2, Eye, Settings} from "lucide-react";
 import type {SelectorKind} from "../../types/selectores";
 import {SELECTOR_CONFIG} from "./config";
 import IconButton from "../../components/ui/IconButton";
@@ -54,7 +54,7 @@ export default function SelectorsCard({
     const openEdit = (r: RowBase): void => setModal({mode: "edit", item: r});
     const openInfo = (r: RowBase): void => setModal({mode: "info", item: r});
 
-    const columns = cfg.tableColumns; // ya vienen con "Activo" primero
+    const columns = cfg.tableColumns; // "Activo" primero
 
     return (
         <section className="rounded-2xl border bg-white shadow-sm">
@@ -76,6 +76,24 @@ export default function SelectorsCard({
                         columns={columns}
                         rows={items}
                         density="compact"
+                        // 👇 Cabeceras con iconos visibles
+                        renderHeader={(col) => {
+                            if (col === "Activo") {
+                                return (
+                                    <span title="Activo" aria-label="Activo"
+                                          className="inline-flex items-center justify-center">
+                    <Eye size={18}/>
+                  </span>
+                                );
+                            }
+                            return col;
+                        }}
+                        actionsHeader={
+                            <span title="Acciones" aria-label="Acciones"
+                                  className="inline-flex items-center justify-center">
+                <Settings size={18}/>
+              </span>
+                        }
                         renderCell={(col, r) => {
                             switch (col) {
                                 case "Tel.":
