@@ -13,6 +13,7 @@ import Resumen from './pages/evento/Resumen';
 import Ubicaciones from './pages/evento/Ubicaciones';
 import Precios from './pages/evento/Precios';
 import Gastos from './pages/evento/Gastos';
+import UiProviders from "./UiProviders";
 
 const router = createBrowserRouter([
     {
@@ -38,6 +39,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-        <RouterProvider router={router} future={{v7_startTransition: true}}/>
+        <UiProviders>
+            <RouterProvider router={router} future={{v7_startTransition: true}}/>
+        </UiProviders>
     </React.StrictMode>
 );

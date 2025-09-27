@@ -12,13 +12,12 @@ export default function EventLayout() {
 
   const base = `/eventos/${id}/`
   const tabs = [
-    { to: '', label: 'Resumen' },
-    { to: 'asistentes', label: 'Asistentes/Reservas' },
-    { to: 'ubicaciones', label: 'Ubicaciones/Recogida' },
-    { to: 'gastos', label: 'Gastos' },
-    { to: 'proveedores', label: 'Proveedores' },
-    { to: 'precios', label: 'Precios' },
-    { to: 'balance', label: 'Balance' },
+      { to: '', label: 'Resumen' },
+      { to: 'asistentes', label: 'Asistentes/Reservas' },
+      { to: 'gastos', label: 'Gastos' },
+      { to: 'precios', label: 'Precios' },
+      { to: 'proveedores', label: 'Proveedores' },
+      { to: 'balance', label: 'Balance' },
   ]
 
   return (

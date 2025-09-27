@@ -3,22 +3,19 @@ import {Outlet, Link, NavLink, useParams} from 'react-router-dom';
 function EventTabs() {
     // Component: pestañas de navegación del evento
     const {id} = useParams();
+    console.log(useParams());
     const tabs = [
         {to: `/eventos/${id}`, label: 'Resumen', end: true as const},
         {to: `/eventos/${id}/reservas`, label: 'Reservas'},
-        {to: `/eventos/${id}/ubicaciones`, label: 'Ubicaciones'},
-        {to: `/eventos/${id}/precios`, label: 'Precios'},
         {to: `/eventos/${id}/gastos`, label: 'Gastos'},
+        {to: `/eventos/${id}/precios`, label: 'Precios'},
         {to: `/eventos/${id}/selectores`, label: 'Selectores'},
     ];
     return (
         <nav className="mb-4 flex gap-2">
             {tabs.map(t => (
                 t.end ? (
-                    <NavLink
-                        key={t.to}
-                        to={t.to}
-                        end
+                    <NavLink key={t.to} to={t.to} end
                         className={({isActive}) =>
                             `px-3 py-1 rounded ${isActive ? 'bg-gray-900 text-white' : 'bg-gray-100'}`
                         }
@@ -27,8 +24,7 @@ function EventTabs() {
                     </NavLink>
                 ) : (
                     <NavLink
-                        key={t.to}
-                        to={t.to}
+                        key={t.to} to={t.to}
                         className={({isActive}) =>
                             `px-3 py-1 rounded ${isActive ? 'bg-gray-900 text-white' : 'bg-gray-100'}`
                         }

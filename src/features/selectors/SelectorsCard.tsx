@@ -1,6 +1,7 @@
-import * as React from "react";
+import {JSX} from "react";
 import {useCallback, useEffect, useState} from "react";
 import {Plus, Info, Pencil, Trash2, Eye, Settings} from "lucide-react";
+import {useAlertConfirm} from "../../components/ui/AlertConfirm";
 import type {SelectorKind} from "../../types/selectores";
 import {SELECTOR_CONFIG} from "./config";
 import IconButton from "../../components/ui/IconButton";
@@ -18,6 +19,7 @@ export default function SelectorsCard({
     eventId: string;
     query: string;
 }): JSX.Element {
+    const {confirm} = useAlertConfirm();
     const cfg = SELECTOR_CONFIG[kind];
     const [items, setItems] = useState<RowBase[]>([]);
 
@@ -44,8 +46,17 @@ export default function SelectorsCard({
         setItems((prev) => prev.map((x) => (x.id === r.id ? updated : x)));
     };
 
-    const remove = (r: RowBase): void => {
+
+    const remove = async (r: RowBase): Promise<void> => {
         if (!r.id) return;
+        const ok = await confirm({
+            title: "Eliminar línea",
+            description: r.nombre ? `Se eliminará “${String(r.nombre)}”. Esta acción no se puede deshacer.` : "Esta acción no se puede deshacer.",
+            confirmText: "Eliminar",
+            cancelText: "Cancelar",
+            isDestructive: true,
+        });
+        if (!ok) return;
         removeSelector(eventId, kind, String(r.id));
         setItems((prev) => prev.filter((x) => x.id !== r.id));
     };
