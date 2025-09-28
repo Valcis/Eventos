@@ -12,6 +12,8 @@ function DataTable<Row>({
                             globalFilterValue,
                             onGlobalFilterChange, // reservado para uso externo
                             density = 'compact',
+                            isDense,
+                            renderActions,
                         }: DataTableProps<Row>): JSX.Element {
     const safeRows: Row[] = rows ?? [];
     const safeColumns: Array<ColumnDef<Row, unknown>> = (columns ?? []).map((column, index) => {
@@ -85,8 +87,9 @@ function DataTable<Row>({
         return [...filteredRows].sort(compare);
     }, [filteredRows, safeColumns, sort]);
 
-    const headPaddingY = density === 'compact' ? 'py-1' : 'py-2';
-    const cellPaddingY = density === 'compact' ? 'py-1' : 'py-2.5';
+    const effectiveDensity = typeof isDense === 'boolean' ? (isDense ? 'compact' : 'normal') : density;
+    const headPaddingY = effectiveDensity === 'compact' ? 'py-1' : 'py-2';
+    const cellPaddingY = effectiveDensity === 'compact' ? 'py-1' : 'py-2.5';
 
     return (
         <div className={className}>
@@ -119,6 +122,11 @@ function DataTable<Row>({
                                     </div>
                                 </th>
                             ))}
+                            {renderActions && (
+                                <th className={`text-right ${headPaddingY} px-3 font-medium text-zinc-700 select-none`} style={{width: 120}}>
+                                    Acciones
+                                </th>
+                            )}
                         </tr>
                         </thead>
                     )}
@@ -150,6 +158,11 @@ function DataTable<Row>({
                                         {renderCell(column as ColumnDef<Row, unknown>, row)}
                                     </td>
                                 ))}
+                                {renderActions && (
+                                    <td className={`${cellPaddingY} px-3 text-right`}>
+                                        {renderActions(row)}
+                                    </td>
+                                )}
                             </tr>
                         ))
                     )}

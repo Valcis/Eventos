@@ -3,8 +3,10 @@ import {useParams} from 'react-router-dom';
 
 import DataTable from '../../components/ui/DataTable';
 import type {ColumnDef, SortState} from '../../components/ui/DataTable/types';
+import Pagination from '../../components/ui/DataTable/Pagination';
 
 import Modal from '../../components/Modal';
+import { Plus } from 'lucide-react';
 import FormField from '../../components/FormField';
 
 import {useCrud, type WithoutBase} from '../../lib/crud';
@@ -28,7 +30,10 @@ export default function Gastos(): JSX.Element {
         eventoId ? getGastosView(eventoId) : 'simple'
     );
     const [globalFilter, setGlobalFilter] = useState<string>('');
+    const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(true);
     const [sortState, setSortState] = useState<SortState>({columnId: null, direction: null});
+    const [page, setPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(5);
 
     // ---------- datos ----------
     const rowsForEvent = useMemo<Gasto[]>(
@@ -106,6 +111,16 @@ export default function Gastos(): JSX.Element {
 
         return [...filteredRows].sort(compareRows);
     }, [filteredRows, sortState]);
+
+    const pagedRows = useMemo<Gasto[]>(() => {
+        const start = (page - 1) * pageSize;
+        return displayedRows.slice(start, start + pageSize);
+    }, [displayedRows, page, pageSize]);
+
+    // reset page when filters/sort/view change
+    React.useEffect(() => {
+        setPage(1);
+    }, [globalFilter, sortState, view]);
 
     const totalAcumulado = useMemo<number>(
         () => rowsForEvent.reduce((sum, row) => sum + (row.total ?? 0), 0),
@@ -253,6 +268,8 @@ export default function Gastos(): JSX.Element {
             : [...commonColumns, ...detailedOnly, actionsColumn];
     }, [view]); // columnas estáticas
 
+    const columnsCount = columns.length;
+
     // ---------- handlers ----------
     const openCreateModal = (): void => {
         setEditingRow(null);
@@ -382,33 +399,67 @@ export default function Gastos(): JSX.Element {
                 </div>
             </div>
 
-            <div className="flex items-center gap-2">
-                <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={openCreateModal}
-                    aria-label="Añadir nuevo gasto"
-                >
-                    Añadir
-                </button>
+            {/* Buscador */}
+            <section className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
+                <header className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+                    <h3 className="text-base font-semibold text-zinc-800">Buscador</h3>
+                    <button
+                        type="button"
+                        className="text-sm px-3 py-2 rounded-xl border border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+                        onClick={() => setIsFiltersOpen((v) => !v)}
+                        aria-expanded={isFiltersOpen}
+                    >
+                        {isFiltersOpen ? 'Ocultar filtros' : 'Mostrar filtros'}
+                    </button>
+                </header>
+                <div className="p-3">
+                    {isFiltersOpen && (
+                        <div className="flex items-center flex-wrap gap-3">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm">Vista:</span>
+                                <button type="button" className="btn" onClick={() => handleChangeView('simple')}>Simple</button>
+                                <button type="button" className="btn" onClick={() => handleChangeView('detallada')}>Detallada</button>
+                            </div>
+                            <div className="ml-auto flex items-center gap-2">
+                                <button type="button" className="btn btn-primary btn-sm">Buscar</button>
+                                <button type="button" className="btn btn-sm" onClick={() => handleChangeView('simple')}>Limpiar filtro</button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            </section>
 
-                <input
-                    className="input max-w-xs"
-                    placeholder="Buscar gastos…"
-                    value={globalFilter}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
-                    aria-label="Filtro global de gastos"
-                />
-            </div>
-
-            <DataTable<Gasto>
-                className="card"
-                columns={columns}
-                rows={displayedRows}
-                sort={sortState}
-                onSortChange={setSortState}
-                emptyState={<span className="text-zinc-500">Sin gastos aún</span>}
-            />
+            {/* Tabla */}
+            <section className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
+                <header className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
+                    <h3 className="text-base font-semibold text-zinc-800">{`Tabla de Gastos (${columnsCount})`}</h3>
+                    <button type="button" className="inline-flex items-center gap-1 text-sm px-3 py-2 rounded-xl border border-indigo-500 text-indigo-600 hover:bg-indigo-50" onClick={openCreateModal}>
+                        <Plus size={16} />
+                        Crear
+                    </button>
+                </header>
+                <div className="p-3">
+                    <DataTable<Gasto>
+                        columns={columns}
+                        rows={pagedRows}
+                        sort={sortState}
+                        onSortChange={setSortState}
+                        emptyState={<span className="text-zinc-500">Sin gastos aún</span>}
+                        density="compact"
+                    />
+                </div>
+                {displayedRows.length > 5 && (
+                    <div className="px-4 py-3">
+                        <Pagination
+                            page={page}
+                            pageSize={pageSize}
+                            total={displayedRows.length}
+                            onPageChange={setPage}
+                            onPageSizeChange={setPageSize}
+                        />
+                    </div>
+                )}
+            </section>
 
             <Modal
                 title={editingRow ? 'Editar gasto' : 'Nuevo gasto'}

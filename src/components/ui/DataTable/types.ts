@@ -78,4 +78,8 @@ export interface DataTableProps<Row> {
     onGlobalFilterChange?: (value: string) => void;
     /** Densidad visual */
     density?: 'compact' | 'normal';
+    /** Boolean convenience for density: true => compact, false => normal */
+    isDense?: boolean;
+    /** Optional actions column renderer; when provided, a final column is shown */
+    renderActions?: (row: Row) => ReactNode;
 }
