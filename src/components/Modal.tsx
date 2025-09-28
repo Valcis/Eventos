@@ -1,100 +1,55 @@
-import React, {useEffect, useRef, JSX, ReactNode} from 'react';
-import {X} from 'lucide-react';
+import React, {ReactNode, useEffect} from 'react';
+import {createPortal} from 'react-dom';
 
-interface ModalProps {
-    title: string;
-    isOpen: boolean; // ✅ convención isX
+export interface ModalProps {
+    isOpen: boolean;
     onClose: () => void;
-    children?: ReactNode;
-    isCloseOnEsc?: boolean; // por defecto true
-    isCloseOnBackdrop?: boolean; // por defecto true
+    title?: string;
+    children: ReactNode;
+    isCloseOnEsc?: boolean;
+    isCloseOnBackdrop?: boolean;
 }
 
 export default function Modal({
-                                  title,
                                   isOpen,
                                   onClose,
+                                  title,
                                   children,
                                   isCloseOnEsc = true,
                                   isCloseOnBackdrop = true,
                               }: ModalProps): JSX.Element | null {
-    const dialogRef = useRef<HTMLDivElement | null>(null);
-
-    // Cerrar con Escape
     useEffect(() => {
         if (!isOpen || !isCloseOnEsc) return;
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') {
-                e.stopPropagation();
-                onClose();
-            }
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
         };
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, isCloseOnEsc, onClose]);
 
-    // Bloquear scroll del body
-    useEffect(() => {
-        if (!isOpen) return;
-        const prev = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = prev;
-        };
-    }, [isOpen]);
-
-    // Enfocar contenedor al abrir
-    useEffect(() => {
-        if (isOpen) {
-            const id = requestAnimationFrame(() => dialogRef.current?.focus());
-            return () => cancelAnimationFrame(id);
-        }
-    }, [isOpen]);
-
     if (!isOpen) return null;
 
-    return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center"
-            aria-labelledby="modal-title"
-            role="dialog"
-            aria-modal="true"
-        >
-            {/* Backdrop: cierra al clicar fuera */}
+    const content = (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center">
             <div
-                className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-                onClick={() => {
-                    if (isCloseOnBackdrop) onClose();
-                }}
+                className="absolute inset-0 bg-black/40"
+                onClick={isCloseOnBackdrop ? onClose : undefined}
+                aria-label="Cerrar"
             />
-
-            {/* Contenido del modal */}
-            <div
-                ref={dialogRef}
-                tabIndex={-1}
-                className="relative z-10 w-[min(92vw,720px)] max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-2xl ring-1 ring-black/5 outline-none transition-transform duration-150 ease-out"
-                onMouseDown={(e) => e.stopPropagation()} // evita cierre al clicar dentro
-            >
-                {/* Header separado + botón X */}
-                <div
-                    className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-2xl border-b bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-                    <h2 id="modal-title" className="text-base md:text-lg font-semibold">
-                        {title}
-                    </h2>
-                    <button
-                        type="button"
-                        aria-label="Cerrar"
-                        title="Cerrar"
-                        onClick={onClose}
-                        className="rounded-xl border p-1.5 transition-transform hover:scale-105 focus:outline-none focus:ring"
-                    >
-                        <X size={16}/>
-                    </button>
-                </div>
-
-                {/* Body */}
-                <div className="p-4">{children}</div>
+            <div role="document" className="relative z-10 w-[92vw] max-w-lg rounded-2xl bg-white p-4 shadow-xl">
+                {title && <h2 className="mb-2 text-lg font-semibold">{title}</h2>}
+                <button
+                    type="button"
+                    aria-label="Cerrar"
+                    className="absolute right-3 top-3 text-zinc-500 hover:text-zinc-800"
+                    onClick={onClose}
+                >
+                    ✕
+                </button>
+                {children}
             </div>
         </div>
     );
+
+    return createPortal(content, document.body);
 }

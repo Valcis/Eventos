@@ -1,150 +1,120 @@
-import React, {useMemo} from 'react';
-import type {ColumnDef, SortState, DataTableExtraProps} from './types';
+import React, {ReactNode, useMemo} from 'react';
+import type {DataTableProps, ColumnDef, SortState} from './types';
 
-export interface DataTableProps<T = unknown> extends DataTableExtraProps {
-    rows?: T[];
-    columns?: ColumnDef<T>[];
-    sort?: SortState;
-    onSortChange?: (next: SortState) => void;
-    emptyState?: React.ReactNode;
-    className?: string;
-    hideHeader?: boolean;
-    /** compat: placeholder del filtro (si usas el control externo arriba o en el padre) */
-    globalFilterPlaceholder?: string;
-}
-
-/**
- * Presentational generic table. Ordenación y filtro global client-side, simples.
- */
-export function DataTable<T>({
-                                 rows,
-                                 columns,
-                                 sort = {columnId: null, direction: null},
-                                 onSortChange,
-                                 emptyState,
-                                 className,
-                                 hideHeader = false,
-                                 globalFilterPlaceholder: _placeholder, // compat (renderízalo fuera)
-                                 globalFilterValue,
-                                 onGlobalFilterChange,
-                                 density = 'compact',
-                             }: DataTableProps<T>) {
-    const safeRows = (rows ?? []) as T[];
-    const safeCols = (columns ?? []).map((col, index) => {
-        const id =
-            col.id ??
-            (typeof col.accessorKey === 'string' ? col.accessorKey : undefined) ??
+function DataTable<Row>({
+                            rows,
+                            columns,
+                            sort = {columnId: null, direction: null},
+                            onSortChange,
+                            emptyState,
+                            className,
+                            hideHeader = false,
+                            globalFilterValue,
+                            onGlobalFilterChange, // reservado para uso externo
+                            density = 'compact',
+                        }: DataTableProps<Row>): JSX.Element {
+    const safeRows: Row[] = rows ?? [];
+    const safeColumns: Array<ColumnDef<Row, unknown>> = (columns ?? []).map((column, index) => {
+        const columnId =
+            column.id ??
+            (typeof column.accessorKey === 'string' ? column.accessorKey : undefined) ??
             `col_${index}`;
-        return {...col, id} as ColumnDef<T>;
+        return {...column, id: columnId};
     });
 
-    function toggleSort(colId: string, isSortable?: boolean) {
+    function toggleSort(columnId: string, isSortable?: boolean): void {
         if (!isSortable) return;
-        const isSame = sort.columnId === colId;
-        const nextDirection: SortState['direction'] = !isSame
-            ? 'asc'
-            : sort.direction === 'asc'
-                ? 'desc'
-                : sort.direction === 'desc'
-                    ? null
-                    : 'asc';
-        onSortChange?.({columnId: nextDirection ? colId : null, direction: nextDirection});
+        const isSame = sort.columnId === columnId;
+        const next: SortState['direction'] =
+            !isSame ? 'asc' : sort.direction === 'asc' ? 'desc' : sort.direction === 'desc' ? null : 'asc';
+        onSortChange?.({columnId: next ? columnId : null, direction: next});
     }
 
-    function renderCell(col: ColumnDef<T>, row: T) {
-        // 1) Valor base: accessor > accessorKey > id (si es string)
-        const rowObj = row as unknown as Record<string, unknown>;
-        const value =
-            col.accessor?.(row) ??
-            (col.accessorKey ? rowObj[col.accessorKey] : undefined) ??
-            (typeof col.id === 'string' ? rowObj[col.id] : undefined);
+    function getCellValue(column: ColumnDef<Row, unknown>, row: Row): unknown {
+        if (column.accessor) return column.accessor(row);
+        if (column.accessorKey) return (row as unknown as Record<string, unknown>)[column.accessorKey];
+        if (typeof column.id === 'string') return (row as unknown as Record<string, unknown>)[column.id];
+        return undefined;
+    }
 
-        // 2) Render de celda
-        if (col.cell) {
-            // Soporte tanstack-like cell({ row })
-            if (!col.accessor && col.accessorKey) {
-                const fn = col.cell as (ctx: { row: { original: T } }) => React.ReactNode;
-                return fn({row: {original: row}});
-            }
-            const fn = col.cell as (value: unknown, row: T) => React.ReactNode;
-            return fn(value, row);
+    function renderCell(column: ColumnDef<Row, unknown>, row: Row): ReactNode {
+        const value = getCellValue(column, row);
+        if (column.cell) {
+            // bivariante: podemos pasar unknown sin romper tipos
+            return (column.cell as (v: unknown, r: Row) => ReactNode)(value, row);
         }
-        return value as React.ReactNode;
+        return value as ReactNode;
     }
 
-    // Filtro global simple (client-side)
-    const filteredRows = useMemo(() => {
+    const filteredRows: Row[] = useMemo(() => {
         if (!globalFilterValue) return safeRows;
-        const q = globalFilterValue.toLowerCase().trim();
-        return safeRows.filter((r) => JSON.stringify(r).toLowerCase().includes(q));
+        const query = globalFilterValue.toLowerCase().trim();
+        return safeRows.filter((row) => JSON.stringify(row).toLowerCase().includes(query));
     }, [safeRows, globalFilterValue]);
 
-    // Ordenación client-side simple
-    const sortedRows = useMemo(() => {
+    const sortedRows: Row[] = useMemo(() => {
         const {columnId, direction} = sort;
         if (!columnId || !direction) return filteredRows;
-        const col = safeCols.find((c) => String(c.id) === String(columnId));
-        if (!col) return filteredRows;
-        const dir = direction;
-        const cmp =
-            col.sortFn ??
-            ((a: T, b: T, d: 'asc' | 'desc') => {
-                const ao = a as unknown as Record<string, unknown>;
-                const bo = b as unknown as Record<string, unknown>;
-                const av =
-                    col.accessor?.(a) ??
-                    (col.accessorKey ? ao[col.accessorKey] : undefined) ??
-                    (typeof col.id === 'string' ? ao[col.id] : undefined);
-                const bv =
-                    col.accessor?.(b) ??
-                    (col.accessorKey ? bo[col.accessorKey] : undefined) ??
-                    (typeof col.id === 'string' ? bo[col.id] : undefined);
-                if (av == null && bv == null) return 0;
-                if (av == null) return d === 'asc' ? -1 : 1;
-                if (bv == null) return d === 'asc' ? 1 : -1;
-                if (typeof av === 'number' && typeof bv === 'number') {
-                    return d === 'asc' ? av - bv : bv - av;
-                }
-                const sa = String(av);
-                const sb = String(bv);
-                return d === 'asc' ? sa.localeCompare(sb) : sb.localeCompare(sa);
-            });
-        return [...filteredRows].sort((a, b) => cmp(a, b, dir));
-    }, [filteredRows, safeCols, sort]);
 
-    const headPy = density === 'compact' ? 'py-1' : 'py-2';
-    const cellPy = density === 'compact' ? 'py-1' : 'py-2.5';
+        const column = safeColumns.find((c) => String(c.id) === String(columnId)) as
+            | ColumnDef<Row, unknown>
+            | undefined;
+        if (!column) return filteredRows;
+
+        const compare: (a: Row, b: Row) => number = column.sortFn
+            ? (a, b) => (column.sortFn as (a: Row, b: Row, d: 'asc' | 'desc') => number)(a, b, direction)
+            : (a, b) => {
+                const left = getCellValue(column, a);
+                const right = getCellValue(column, b);
+
+                if (left == null && right == null) return 0;
+                if (left == null) return direction === 'asc' ? -1 : 1;
+                if (right == null) return direction === 'asc' ? 1 : -1;
+
+                if (typeof left === 'number' && typeof right === 'number') {
+                    return direction === 'asc' ? left - right : right - left;
+                }
+                if (typeof left === 'boolean' && typeof right === 'boolean') {
+                    return direction === 'asc' ? Number(left) - Number(right) : Number(right) - Number(left);
+                }
+                const leftStr = String(left);
+                const rightStr = String(right);
+                return direction === 'asc' ? leftStr.localeCompare(rightStr) : rightStr.localeCompare(leftStr);
+            };
+
+        return [...filteredRows].sort(compare);
+    }, [filteredRows, safeColumns, sort]);
+
+    const headPaddingY = density === 'compact' ? 'py-1' : 'py-2';
+    const cellPaddingY = density === 'compact' ? 'py-1' : 'py-2.5';
 
     return (
         <div className={className}>
-            {/* Si quieres, renderiza un control de filtro externo y pásalo vía props */}
-            {/* Tabla */}
             <div className="overflow-auto rounded-xl border border-zinc-200">
                 <table className="min-w-full text-sm">
                     {!hideHeader && (
                         <thead className="bg-zinc-50">
                         <tr>
-                            {safeCols.map((c) => (
+                            {safeColumns.map((column) => (
                                 <th
-                                    key={String(c.id)}
-                                    className={`text-left ${headPy} px-3 font-medium text-zinc-700 select-none`}
-                                    style={{width: c.width}}
-                                    onClick={() => toggleSort(String(c.id), c.isSortable)}
+                                    key={String(column.id)}
+                                    className={`text-left ${headPaddingY} px-3 font-medium text-zinc-700 select-none`}
+                                    style={{width: column.width}}
+                                    onClick={() => toggleSort(String(column.id), column.isSortable)}
                                 >
                                     <div
                                         className={`inline-flex items-center gap-1 ${
-                                            (c.align ?? 'left') === 'right'
+                                            (column.align ?? 'left') === 'right'
                                                 ? 'justify-end w-full'
-                                                : (c.align ?? 'left') === 'center'
+                                                : (column.align ?? 'left') === 'center'
                                                     ? 'justify-center w-full'
                                                     : ''
                                         }`}
-                                        role={c.isSortable ? 'button' : undefined}
-                                        aria-label={c.isSortable ? 'Ordenar' : undefined}
+                                        role={column.isSortable ? 'button' : undefined}
                                     >
-                                        {c.header}
-                                        {sort.columnId === c.id && sort.direction && (
-                                            <span aria-hidden> {sort.direction === 'asc' ? '▲' : '▼'} </span>
+                                        {column.header}
+                                        {sort.columnId === column.id && sort.direction && (
+                                            <span aria-hidden>{sort.direction === 'asc' ? '▲' : '▼'}</span>
                                         )}
                                     </div>
                                 </th>
@@ -155,26 +125,29 @@ export function DataTable<T>({
                     <tbody>
                     {sortedRows.length === 0 ? (
                         <tr>
-                            <td className="px-3 py-6 text-center text-zinc-500" colSpan={safeCols.length}>
+                            <td className="px-3 py-6 text-center text-zinc-500" colSpan={safeColumns.length}>
                                 {emptyState ?? 'Sin datos'}
                             </td>
                         </tr>
                     ) : (
-                        sortedRows.map((row, rIdx) => (
-                            <tr key={(row as any)?.id ?? rIdx} className="border-t border-zinc-100">
-                                {safeCols.map((c, cIdx) => (
+                        sortedRows.map((row, rowIndex) => (
+                            <tr
+                                key={(row as unknown as { id?: string })?.id ?? rowIndex}
+                                className="border-t border-zinc-100"
+                            >
+                                {safeColumns.map((column, columnIndex) => (
                                     <td
-                                        key={`${String(c.id)}_${rIdx}_${cIdx}`}
-                                        className={`${cellPy} px-3 text-zinc-800 ${
-                                            (c.align ?? 'left') === 'right'
+                                        key={`${String(column.id)}_${rowIndex}_${columnIndex}`}
+                                        className={`${cellPaddingY} px-3 text-zinc-800 ${
+                                            (column.align ?? 'left') === 'right'
                                                 ? 'text-right'
-                                                : (c.align ?? 'left') === 'center'
+                                                : (column.align ?? 'left') === 'center'
                                                     ? 'text-center'
                                                     : 'text-left'
                                         }`}
-                                        style={{width: c.width}}
+                                        style={{width: column.width}}
                                     >
-                                        {renderCell(c, row)}
+                                        {renderCell(column as ColumnDef<Row, unknown>, row)}
                                     </td>
                                 ))}
                             </tr>

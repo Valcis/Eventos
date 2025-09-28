@@ -1,34 +1,36 @@
-// src/pages/evento/Gastos.tsx
-import React, {useMemo, useState} from 'react';
+import React, {FormEvent, ReactNode, useMemo, useState} from 'react';
 import {useParams} from 'react-router-dom';
 
 import DataTable from '../../components/ui/DataTable';
-import type {ColumnDef} from '../../components/ui/DataTable/types';
+import type {ColumnDef, SortState} from '../../components/ui/DataTable/types';
 
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
 
 import {useCrud, type WithoutBase} from '../../lib/crud';
-
-import type {Gasto} from '../../types';
+import type {Gasto, ID} from '../../types';
 import {calcularGasto} from '../../lib/calculations/gastos';
 import {getGastosView, setGastosView, type GastosView} from '../../lib/view/views';
 import {GastoUpsertSchema} from '../../lib/validators';
 import {formatCurrency} from '../../lib/format';
 
+// Unificamos el tipo del valor de celda para evitar invariancia de genéricos
+type GastoCell = string | number | boolean | null | undefined;
+
 export default function Gastos(): JSX.Element {
-    const {id: eventoId} = useParams<{ id: string }>();
+    const {id: eventoId} = useParams<{ id: ID }>();
     const crud = useCrud<Gasto>('gastos');
 
-    // ---- Estado UI
+    // ---------- estado UI ----------
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const [editingRow, setEditingRow] = useState<Gasto | null>(null);
     const [view, setView] = useState<GastosView>(() =>
         eventoId ? getGastosView(eventoId) : 'simple'
     );
     const [globalFilter, setGlobalFilter] = useState<string>('');
+    const [sortState, setSortState] = useState<SortState>({columnId: null, direction: null});
 
-    // ---- Datos
+    // ---------- datos ----------
     const rowsForEvent = useMemo<Gasto[]>(
         () => crud.items.filter((row) => row.eventoId === eventoId),
         [crud.items, eventoId]
@@ -40,51 +42,101 @@ export default function Gastos(): JSX.Element {
         return rowsForEvent.filter((row) => JSON.stringify(row).toLowerCase().includes(query));
     }, [rowsForEvent, globalFilter]);
 
+    const displayedRows = useMemo<Gasto[]>(() => {
+        const {columnId, direction} = sortState;
+        if (!columnId || !direction) return filteredRows;
+
+        const getComparableValue = (row: Gasto): unknown => {
+            switch (columnId) {
+                case 'producto':
+                    return row.producto;
+                case 'unidad':
+                    return row.unidad;
+                case 'cantidad':
+                    return row.cantidad;
+                case 'tipoPrecio':
+                    return row.tipoPrecio;
+                case 'tipoIVA':
+                    return row.tipoIVA;
+                case 'base':
+                    return row.base;
+                case 'iva':
+                    return row.iva;
+                case 'total':
+                    return row.total;
+                case 'isPack':
+                    return row.isPack;
+                case 'unidadesPack':
+                    return row.unidadesPack;
+                case 'precioUnidad':
+                    return row.precioUnidad;
+                case 'pagador':
+                    return row.pagador;
+                case 'tienda':
+                    return row.tienda;
+                case 'comprobado':
+                    return row.comprobado;
+                default:
+                    return undefined;
+            }
+        };
+
+        const compareRows = (leftRow: Gasto, rightRow: Gasto): number => {
+            const leftValue = getComparableValue(leftRow);
+            const rightValue = getComparableValue(rightRow);
+
+            if (leftValue == null && rightValue == null) return 0;
+            if (leftValue == null) return direction === 'asc' ? -1 : 1;
+            if (rightValue == null) return direction === 'asc' ? 1 : -1;
+
+            if (typeof leftValue === 'number' && typeof rightValue === 'number') {
+                return direction === 'asc' ? leftValue - rightValue : rightValue - leftValue;
+            }
+            if (typeof leftValue === 'boolean' && typeof rightValue === 'boolean') {
+                const leftAsNumber = Number(leftValue);
+                const rightAsNumber = Number(rightValue);
+                return direction === 'asc' ? leftAsNumber - rightAsNumber : rightAsNumber - leftAsNumber;
+            }
+            const leftAsString = String(leftValue);
+            const rightAsString = String(rightValue);
+            return direction === 'asc'
+                ? leftAsString.localeCompare(rightAsString)
+                : rightAsString.localeCompare(leftAsString);
+        };
+
+        return [...filteredRows].sort(compareRows);
+    }, [filteredRows, sortState]);
+
     const totalAcumulado = useMemo<number>(
-        () => rowsForEvent.reduce((acc, row) => acc + (row.total ?? 0), 0),
+        () => rowsForEvent.reduce((sum, row) => sum + (row.total ?? 0), 0),
         [rowsForEvent]
     );
 
-    // ---- Columnas (definidas aquí, en tu formato ColumnDef)
+    // ---------- columnas (TODAS con GastoCell; sin anys, sin unknown en tu código) ----------
     const commonColumns: ColumnDef<Gasto>[] = [
-        {
-            id: 'producto',
-            header: 'Producto',
-            accessor: (row) => row.producto,
-            isSortable: true,
-            width: 220,
-        },
-        {
-            id: 'unidad',
-            header: 'Unidad',
-            accessor: (row) => row.unidad,
-            width: 120,
-        },
+        {id: 'producto', header: 'Producto', accessor: (row) => row.producto, isSortable: true, width: 220},
+        {id: 'unidad', header: 'Unidad', accessor: (row) => row.unidad, width: 120},
         {
             id: 'cantidad',
             header: 'Cantidad',
             accessor: (row) => row.cantidad,
             align: 'right',
             isSortable: true,
-            width: 110,
+            width: 110
         },
         {
             id: 'tipoPrecio',
             header: 'Precio',
-            accessor: (row) => (row.tipoPrecio === 'bruto' ? 'Bruto' : 'Neto'),
+            accessor: (row) => row.tipoPrecio,
+            cell: (value) => (value === 'bruto' ? 'Bruto' : 'Neto'),
             width: 90,
         },
-        {
-            id: 'tipoIVA',
-            header: 'IVA %',
-            accessor: (row) => row.tipoIVA,
-            align: 'right',
-            width: 80,
-        },
+        {id: 'tipoIVA', header: 'IVA %', accessor: (row) => row.tipoIVA, align: 'right', width: 80},
         {
             id: 'base',
             header: 'Base',
-            accessor: (row) => formatCurrency(row.base ?? 0),
+            accessor: (row) => row.base,
+            cell: (value) => formatCurrency(Number(value ?? 0)),
             align: 'right',
             isSortable: true,
             width: 120,
@@ -92,7 +144,8 @@ export default function Gastos(): JSX.Element {
         {
             id: 'iva',
             header: 'IVA',
-            accessor: (row) => formatCurrency(row.iva ?? 0),
+            accessor: (row) => row.iva,
+            cell: (value) => formatCurrency(Number(value ?? 0)),
             align: 'right',
             isSortable: true,
             width: 120,
@@ -100,7 +153,8 @@ export default function Gastos(): JSX.Element {
         {
             id: 'total',
             header: 'Total',
-            accessor: (row) => formatCurrency(row.total ?? 0),
+            accessor: (row) => row.total,
+            cell: (value) => formatCurrency(Number(value ?? 0)),
             align: 'right',
             isSortable: true,
             width: 140,
@@ -111,40 +165,37 @@ export default function Gastos(): JSX.Element {
         {
             id: 'isPack',
             header: 'Pack',
-            accessor: (row) => (row.isPack ? 'Sí' : 'No'),
+            accessor: (row: Gasto) => row.isPack,
+            cell: (value) => (value ? 'Sí' : 'No'),
             align: 'center',
             width: 80,
         },
         {
             id: 'unidadesPack',
             header: 'Unidades/Pack',
-            accessor: (row) => row.unidadesPack ?? '-',
+            accessor: (row: Gasto): number | undefined => row.unidadesPack,
+            cell: (value: unknown, _row: Gasto): ReactNode => {
+                const units = value as number | undefined;
+                return units ?? '—';
+            },
             align: 'right',
             width: 130,
         },
         {
             id: 'precioUnidad',
             header: '€/Unidad',
-            accessor: (row) => (row.precioUnidad != null ? formatCurrency(row.precioUnidad) : '-'),
+            accessor: (row) => row.precioUnidad,
+            cell: (value) => (value != null ? formatCurrency(Number(value)) : '—'),
             align: 'right',
             width: 120,
         },
-        {
-            id: 'pagador',
-            header: 'Pagador',
-            accessor: (row) => row.pagador ?? '—',
-            width: 140,
-        },
-        {
-            id: 'tienda',
-            header: 'Tienda',
-            accessor: (row) => row.tienda ?? '—',
-            width: 140,
-        },
+        {id: 'pagador', header: 'Pagador', accessor: (row) => row.pagador ?? '—', width: 140},
+        {id: 'tienda', header: 'Tienda', accessor: (row) => row.tienda ?? '—', width: 140},
         {
             id: 'comprobado',
             header: 'OK',
-            accessor: (row) => (row.comprobado ? '✓' : '—'),
+            accessor: (row) => row.comprobado,
+            cell: (value) => (value ? '✓' : '—'),
             align: 'center',
             width: 70,
         },
@@ -153,6 +204,7 @@ export default function Gastos(): JSX.Element {
     const actionsColumn: ColumnDef<Gasto> = {
         id: 'actions',
         header: 'Acciones',
+        accessor: () => null,
         cell: (_value, row) => {
             const isLocked = row.locked === true;
             return (
@@ -165,7 +217,6 @@ export default function Gastos(): JSX.Element {
                     >
                         {isLocked ? '🔓' : '🔒'}
                     </button>
-
                     <button
                         type="button"
                         className="btn"
@@ -179,7 +230,6 @@ export default function Gastos(): JSX.Element {
                     >
                         Editar
                     </button>
-
                     <button
                         type="button"
                         className="btn"
@@ -197,13 +247,13 @@ export default function Gastos(): JSX.Element {
         width: 220,
     };
 
-    const columns = useMemo<ColumnDef<Gasto>[]>(() => {
+    const columns: Array<ColumnDef<Gasto>> = useMemo(() => {
         return view === 'simple'
             ? [...commonColumns, actionsColumn]
             : [...commonColumns, ...detailedOnly, actionsColumn];
-    }, [view]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [view]); // columnas estáticas
 
-    // ---- Handlers
+    // ---------- handlers ----------
     const openCreateModal = (): void => {
         setEditingRow(null);
         setIsModalOpen(true);
@@ -219,7 +269,7 @@ export default function Gastos(): JSX.Element {
         if (eventoId) setGastosView(eventoId, next);
     }
 
-    function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
+    function handleSubmit(event: FormEvent<HTMLFormElement>): void {
         event.preventDefault();
         if (!eventoId) return;
 
@@ -250,7 +300,7 @@ export default function Gastos(): JSX.Element {
         if (divisor > 0) precioUnidad = calculado.total / divisor;
 
         const upsertCandidate = {
-            eventoId,
+            eventoId: eventoId as string,
             producto,
             unidad,
             cantidad,
@@ -279,13 +329,11 @@ export default function Gastos(): JSX.Element {
             return;
         }
 
-        // elimina propiedades undefined para update
         const cleanedForUpdate: Partial<Gasto> = Object.fromEntries(
             Object.entries(parsed.data).filter(([, value]) => value !== undefined)
         ) as Partial<Gasto>;
 
         const createPayload: WithoutBase<Gasto> = {
-            // --- requeridos ---
             eventoId: parsed.data.eventoId,
             producto: parsed.data.producto,
             unidad: parsed.data.unidad,
@@ -298,7 +346,6 @@ export default function Gastos(): JSX.Element {
             isPack: parsed.data.isPack,
             comprobado: parsed.data.comprobado,
             locked: parsed.data.locked,
-            // --- opcionales (solo si existen) ---
             ...(parsed.data.unidadesPack !== undefined ? {unidadesPack: parsed.data.unidadesPack} : {}),
             ...(parsed.data.precioUnidad !== undefined ? {precioUnidad: parsed.data.precioUnidad} : {}),
             ...(parsed.data.pagador !== undefined ? {pagador: parsed.data.pagador} : {}),
@@ -316,10 +363,8 @@ export default function Gastos(): JSX.Element {
         event.currentTarget.reset();
     }
 
-    // ---- Render
     return (
         <div className="space-y-4">
-            {/* Resumen */}
             <div className="card flex items-center justify-between">
                 <div>
                     <div className="text-xs uppercase text-zinc-500">Gasto acumulado</div>
@@ -337,7 +382,6 @@ export default function Gastos(): JSX.Element {
                 </div>
             </div>
 
-            {/* Controles */}
             <div className="flex items-center gap-2">
                 <button
                     type="button"
@@ -357,34 +401,33 @@ export default function Gastos(): JSX.Element {
                 />
             </div>
 
-            {/* Tabla */}
             <DataTable<Gasto>
                 className="card"
                 columns={columns}
-                rows={filteredRows}
+                rows={displayedRows}
+                sort={sortState}
+                onSortChange={setSortState}
                 emptyState={<span className="text-zinc-500">Sin gastos aún</span>}
             />
 
-            {/* Modal alta/edición */}
             <Modal
                 title={editingRow ? 'Editar gasto' : 'Nuevo gasto'}
                 isOpen={isModalOpen}
                 onClose={closeModal}
+                isCloseOnEsc
+                isCloseOnBackdrop
             >
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <FormField label="Producto">
                             <input name="producto" className="input w-full" required/>
                         </FormField>
-
                         <FormField label="Unidad">
                             <input name="unidad" className="input w-full" required/>
                         </FormField>
-
                         <FormField label="Cantidad">
                             <input name="cantidad" type="number" step="1" min="0" className="input w-full" required/>
                         </FormField>
-
                         <FormField label="Tipo de precio">
                             <div className="flex items-center gap-4">
                                 <label className="inline-flex items-center gap-2">
@@ -396,56 +439,41 @@ export default function Gastos(): JSX.Element {
                                 </label>
                             </div>
                         </FormField>
-
-                        <FormField label="Tipo IVA (%)">
+                        <FormField label="Tipo IVA (%))">
                             <select name="tipoIVA" className="input w-full" defaultValue={21}>
                                 {[0, 4, 10, 21].map((value) => (
-                                    <option key={value} value={value}>
-                                        {value}
-                                    </option>
+                                    <option key={value} value={value}>{value}</option>
                                 ))}
                             </select>
                         </FormField>
-
-                        {/* Campos alternativos según tipoPrecio */}
                         <FormField label="Total (si BRUTO)">
                             <input name="total" type="number" step="0.01" min="0" className="input w-full"/>
                         </FormField>
-
                         <FormField label="Base (si NETO)">
                             <input name="base" type="number" step="0.01" min="0" className="input w-full"/>
                         </FormField>
-
                         <FormField label="¿Pack?">
                             <label className="inline-flex items-center gap-2">
                                 <input type="checkbox" name="isPack"/> Sí
                             </label>
                         </FormField>
-
                         <FormField label="Unidades en pack">
                             <input name="unidadesPack" type="number" step="1" min="1" className="input w-full"/>
                         </FormField>
-
                         <FormField label="Pagador">
                             <input name="pagador" className="input w-full"/>
                         </FormField>
-
                         <FormField label="Tienda">
                             <input name="tienda" className="input w-full"/>
                         </FormField>
-
                         <FormField label="Notas">
                             <textarea name="notas" className="input w-full" rows={3}/>
                         </FormField>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">
-                        <button type="button" className="btn" onClick={closeModal}>
-                            Cancelar
-                        </button>
-                        <button type="submit" className="btn btn-primary">
-                            Guardar
-                        </button>
+                        <button type="button" className="btn" onClick={closeModal}>Cancelar</button>
+                        <button type="submit" className="btn btn-primary">Guardar</button>
                     </div>
                 </form>
             </Modal>

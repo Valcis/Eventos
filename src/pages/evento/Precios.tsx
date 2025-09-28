@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {DataTable} from '../../components/ui/DataTable';
+import DataTable from '../../components/ui/DataTable';
 import type {SortState} from '../../components/ui/DataTable/types';
 import Pagination from '../../components/ui/DataTable/Pagination';
 import FilterBar from '../../components/ui/FilterBar/FilterBar';
