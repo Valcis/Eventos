@@ -28,4 +28,9 @@ export const GastoSchema = z.object({
 export type GastoFromSchema = z.infer<typeof GastoSchema>;
 
 // Upsert schema (no id on create)
-export const GastoUpsertSchema = GastoSchema.partial({ id: true, createdAt: true, updatedAt: true, isActive: true });
+export const GastoUpsertSchema = GastoSchema.partial({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  isActive: true,
+});

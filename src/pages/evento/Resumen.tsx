@@ -10,11 +10,20 @@ export default function Resumen() {
   const reservasCrud = useCrud<Reserva>('reservas');
   const ubicacionesCrud = useCrud<Ubicacion>('ubicaciones');
 
-  const gastos = useMemo(() => gastosCrud.items.filter(g => g.eventoId === eventoId), [gastosCrud.items, eventoId]);
-  const reservas = useMemo(() => reservasCrud.items.filter(r => r.eventoId === eventoId), [reservasCrud.items, eventoId]);
+  const gastos = useMemo(
+    () => gastosCrud.items.filter((g) => g.eventoId === eventoId),
+    [gastosCrud.items, eventoId],
+  );
+  const reservas = useMemo(
+    () => reservasCrud.items.filter((r) => r.eventoId === eventoId),
+    [reservasCrud.items, eventoId],
+  );
   const ubicacion = useMemo(
-    () => ubicacionesCrud.items.find(u => u.id === (ubicacionesCrud.items.find(x => x.eventoId === eventoId)?.id)),
-    [ubicacionesCrud.items, eventoId]
+    () =>
+      ubicacionesCrud.items.find(
+        (u) => u.id === ubicacionesCrud.items.find((x) => x.eventoId === eventoId)?.id,
+      ),
+    [ubicacionesCrud.items, eventoId],
   );
 
   // Construimos los parámetros evitando pasar propiedades opcionales como undefined (exactOptionalPropertyTypes)
@@ -36,9 +45,7 @@ export default function Resumen() {
       </div>
       <div className="card p-4">
         <h3 className="text-sm text-gray-500">Aforo disponible</h3>
-        <div className="text-2xl font-semibold">
-          {summary.aforoDisponible ?? '—'}
-        </div>
+        <div className="text-2xl font-semibold">{summary.aforoDisponible ?? '—'}</div>
       </div>
     </section>
   );

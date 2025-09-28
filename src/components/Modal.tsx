@@ -1,15 +1,14 @@
-import * as React from "react";
-import {useEffect, useRef} from "react";
-import {X} from "lucide-react";
+import React, {useEffect, useRef, JSX, ReactNode} from 'react';
+import {X} from 'lucide-react';
 
-type ModalProps = {
+interface ModalProps {
     title: string;
-    isOpen: boolean;             // ✅ convención isX
+    isOpen: boolean; // ✅ convención isX
     onClose: () => void;
-    children?: React.ReactNode;
-    isCloseOnEsc?: boolean;      // por defecto true
+    children?: ReactNode;
+    isCloseOnEsc?: boolean; // por defecto true
     isCloseOnBackdrop?: boolean; // por defecto true
-};
+}
 
 export default function Modal({
                                   title,
@@ -25,20 +24,20 @@ export default function Modal({
     useEffect(() => {
         if (!isOpen || !isCloseOnEsc) return;
         const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key === "Escape") {
+            if (e.key === 'Escape') {
                 e.stopPropagation();
                 onClose();
             }
         };
-        window.addEventListener("keydown", onKeyDown);
-        return () => window.removeEventListener("keydown", onKeyDown);
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
     }, [isOpen, isCloseOnEsc, onClose]);
 
     // Bloquear scroll del body
     useEffect(() => {
         if (!isOpen) return;
         const prev = document.body.style.overflow;
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = 'hidden';
         return () => {
             document.body.style.overflow = prev;
         };
@@ -79,7 +78,9 @@ export default function Modal({
                 {/* Header separado + botón X */}
                 <div
                     className="sticky top-0 z-10 flex items-center justify-between gap-3 rounded-t-2xl border-b bg-white/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-white/80">
-                    <h2 id="modal-title" className="text-base md:text-lg font-semibold">{title}</h2>
+                    <h2 id="modal-title" className="text-base md:text-lg font-semibold">
+                        {title}
+                    </h2>
                     <button
                         type="button"
                         aria-label="Cerrar"
@@ -92,9 +93,7 @@ export default function Modal({
                 </div>
 
                 {/* Body */}
-                <div className="p-4">
-                    {children}
-                </div>
+                <div className="p-4">{children}</div>
             </div>
         </div>
     );

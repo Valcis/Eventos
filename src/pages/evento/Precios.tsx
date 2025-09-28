@@ -7,15 +7,13 @@ import type {FilterValues, FilterField} from '../../components/ui/FilterBar/type
 import {defaultCompare, getDirectionMultiplier, stableSort} from '../../lib/utils';
 import {preciosColumns, type PrecioItem} from '../../lib/tables/precios.columns';
 
-
 const MIN_ROWS_FOR_PAGINATION = 6; // aparece paginación si hay > 5 filas
-
 
 /**
  * Vista del tab "Precios" (capa visual). Los datos se inyectan localmente o por futura integración.
  */
 export default function Precios() {
-// TODO: Integrar con fuente real de datos. Por ahora, array vacío para no romper.
+    // TODO: Integrar con fuente real de datos. Por ahora, array vacío para no romper.
     const [rows] = useState<PrecioItem[]>([]);
     const [filters, setFilters] = useState<FilterValues>({});
     const [sort, setSort] = useState<SortState>({columnId: null, direction: null});
@@ -32,7 +30,7 @@ export default function Precios() {
             {id: 'importe', label: 'Importe mínimo', type: 'number'},
             {id: 'isActivo', label: 'Activo', type: 'boolean'},
         ],
-        []
+        [],
     );
 
     // Valores derivados para selects (categoría/moneda) a partir de los datos
@@ -46,30 +44,34 @@ export default function Precios() {
     }, [rows]);
 
     // Inyectar opciones dinámicas en los fields (sin re-crear referencias)
-    const effectiveFields = useMemo(() =>
+    const effectiveFields = useMemo(
+        () =>
             filterFields.map((f) => {
                 if (f.id === 'categoria') return {...f, options: dynamicSelects.categorias};
                 if (f.id === 'moneda') return {...f, options: dynamicSelects.monedas};
                 return f;
             }),
-        [filterFields, dynamicSelects]);
+        [filterFields, dynamicSelects],
+    );
 
     // Pipeline: filtros → orden → paginación
     const filtered = useMemo(() => {
         return rows.filter((r) => {
-// nombre (contains)
-            const nombre = String(filters['nombre'] ?? '').trim().toLowerCase();
+            // nombre (contains)
+            const nombre = String(filters['nombre'] ?? '')
+                .trim()
+                .toLowerCase();
             if (nombre && !r.nombre.toLowerCase().includes(nombre)) return false;
-// categoria (equals)
+            // categoria (equals)
             const cat = String(filters['categoria'] ?? '');
             if (cat && r.categoria !== cat) return false;
-// moneda (equals)
+            // moneda (equals)
             const mon = String(filters['moneda'] ?? '');
             if (mon && r.moneda !== mon) return false;
-// importe mínimo (gte)
+            // importe mínimo (gte)
             const min = filters['importe'];
             if (typeof min === 'number' && r.importe < min) return false;
-// activo (equals)
+            // activo (equals)
             const act = filters['isActivo'];
             if (typeof act === 'boolean' && r.isActivo !== act) return false;
             return true;
@@ -86,8 +88,8 @@ export default function Precios() {
             const getVal = (row: PrecioItem) =>
                 col.accessor
                     ? col.accessor(row)
-                    // usamos la id de la columna como key del row
-                    : (row as any)[col.id as keyof PrecioItem];
+                    : // usamos la id de la columna como key del row
+                    (row)[col.id as keyof PrecioItem];
 
             const va = getVal(a);
             const vb = getVal(b);
@@ -101,8 +103,7 @@ export default function Precios() {
         return sorted.slice(start, start + pageSize);
     }, [sorted, page, pageSize]);
 
-
-// Reset de página al cambiar filtros/orden
+    // Reset de página al cambiar filtros/orden
     useEffect(() => setPage(1), [filters, sort]);
 
     const shouldShowPagination = filtered.length >= MIN_ROWS_FOR_PAGINATION;
@@ -121,7 +122,6 @@ export default function Precios() {
                 isOpen={isFiltersOpen}
                 onToggle={setIsFiltersOpen}
             />
-
 
             {/* Card de la tabla */}
             <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
@@ -148,7 +148,6 @@ export default function Precios() {
                     onSortChange={setSort}
                     emptyState={<span>No hay precios que coincidan con los filtros.</span>}
                 />
-
             </div>
 
             {shouldShowPagination && (
@@ -162,5 +161,4 @@ export default function Precios() {
             )}
         </div>
     );
-
 }

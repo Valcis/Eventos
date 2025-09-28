@@ -10,7 +10,10 @@ import FormField from '../../components/FormField';
 export default function Ubicaciones() {
   const { id: eventoId } = useParams<{ id: string }>();
   const crud = useCrud<Ubicacion>('ubicaciones');
-  const rows = useMemo(() => crud.items.filter(u => u.eventoId === eventoId), [crud.items, eventoId]);
+  const rows = useMemo(
+    () => crud.items.filter((u) => u.eventoId === eventoId),
+    [crud.items, eventoId],
+  );
 
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Ubicacion | null>(null);
@@ -34,20 +37,30 @@ export default function Ubicaciones() {
       direccion,
       habilitado,
       locked: false,
-      ...(capacidadEntry && String(capacidadEntry) !== '' ? { capacidad: Number(capacidadEntry) } : {}),
+      ...(capacidadEntry && String(capacidadEntry) !== ''
+        ? { capacidad: Number(capacidadEntry) }
+        : {}),
       ...(telefonoEntry && String(telefonoEntry) !== '' ? { telefono: String(telefonoEntry) } : {}),
       ...(horarioEntry && String(horarioEntry) !== '' ? { horario: String(horarioEntry) } : {}),
-      ...(comentariosEntry && String(comentariosEntry) !== '' ? { comentarios: String(comentariosEntry) } : {}),
+      ...(comentariosEntry && String(comentariosEntry) !== ''
+        ? { comentarios: String(comentariosEntry) }
+        : {}),
     } as const;
 
     const parsed = ubicacionSchema.safeParse(base);
     if (!parsed.success) {
       const first = parsed.error.issues[0];
-      alert(first ? `Error de validación en "${first.path.join('.')}": ${first.message}` : 'Error de validación.');
+      alert(
+        first
+          ? `Error de validación en "${first.path.join('.')}": ${first.message}`
+          : 'Error de validación.',
+      );
       return;
     }
 
-    const payload = Object.fromEntries(Object.entries(parsed.data).filter(([, v]) => v !== undefined)) as Partial<Ubicacion>;
+    const payload = Object.fromEntries(
+      Object.entries(parsed.data).filter(([, v]) => v !== undefined),
+    ) as Partial<Ubicacion>;
 
     if (editing) {
       // update respetando exactOptionalPropertyTypes: solo incluimos propiedades presentes
@@ -64,7 +77,15 @@ export default function Ubicaciones() {
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Ubicaciones</h2>
-        <button className="btn btn-primary" onClick={() => { setEditing(null); setOpen(true); }}>Nueva ubicación</button>
+        <button
+          className="btn btn-primary"
+          onClick={() => {
+            setEditing(null);
+            setOpen(true);
+          }}
+        >
+          Nueva ubicación
+        </button>
       </div>
 
       <div className="card overflow-auto">
@@ -82,7 +103,7 @@ export default function Ubicaciones() {
             </tr>
           </thead>
           <tbody>
-            {rows.map(u => {
+            {rows.map((u) => {
               const bloqueado = u.locked;
               return (
                 <tr key={u.id} className={bloqueado ? 'opacity-60' : ''}>
@@ -92,38 +113,107 @@ export default function Ubicaciones() {
                   <td>{u.horario ?? ''}</td>
                   <td>{u.comentarios ?? ''}</td>
                   <td>
-                    <input type="checkbox" checked={u.habilitado} onChange={() => !bloqueado && crud.update(u.id, { habilitado: !u.habilitado })} disabled={bloqueado} />
+                    <input
+                      type="checkbox"
+                      checked={u.habilitado}
+                      onChange={() =>
+                        !bloqueado && crud.update(u.id, { habilitado: !u.habilitado })
+                      }
+                      disabled={bloqueado}
+                    />
                   </td>
                   <td>{u.capacidad ?? ''}</td>
                   <td className="flex gap-2">
-                    <button className="btn btn-sm" onClick={() => crud.update(u.id, { locked: !u.locked })}>{u.locked ? '🔓' : '🔒'}</button>
-                    <button className="btn btn-sm" onClick={() => !bloqueado && setEditing(u)} disabled={bloqueado}>Editar</button>
-                    <button className="btn btn-sm" onClick={() => !bloqueado && crud.remove(u.id)} disabled={bloqueado}>Borrar</button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => crud.update(u.id, { locked: !u.locked })}
+                    >
+                      {u.locked ? '🔓' : '🔒'}
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => !bloqueado && setEditing(u)}
+                      disabled={bloqueado}
+                    >
+                      Editar
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => !bloqueado && crud.remove(u.id)}
+                      disabled={bloqueado}
+                    >
+                      Borrar
+                    </button>
                   </td>
                 </tr>
               );
             })}
             {rows.length === 0 && (
-              <tr><td colSpan={8} className="text-center text-gray-500 p-4">Sin ubicaciones</td></tr>
+              <tr>
+                <td colSpan={8} className="text-center text-gray-500 p-4">
+                  Sin ubicaciones
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
-      <Modal title={editing ? 'Editar ubicación' : 'Nueva ubicación'} isOpen={open} onClose={() => { setOpen(false); setEditing(null); }}>
+      <Modal
+        title={editing ? 'Editar ubicación' : 'Nueva ubicación'}
+        isOpen={open}
+        onClose={() => {
+          setOpen(false);
+          setEditing(null);
+        }}
+      >
         <form className="grid grid-cols-1 md:grid-cols-2 gap-3" onSubmit={onSubmit}>
-          <FormField label="Nombre"><input name="nombre" className="input" required defaultValue={editing?.nombre ?? ''} /></FormField>
-          <FormField label="Dirección"><input name="direccion" className="input" required defaultValue={editing?.direccion ?? ''} /></FormField>
-          <FormField label="Teléfono"><input name="telefono" className="input" defaultValue={editing?.telefono ?? ''} /></FormField>
-          <FormField label="Horario"><input name="horario" className="input" defaultValue={editing?.horario ?? ''} /></FormField>
-          <FormField label="Comentarios"><input name="comentarios" className="input" defaultValue={editing?.comentarios ?? ''} /></FormField>
+          <FormField label="Nombre">
+            <input name="nombre" className="input" required defaultValue={editing?.nombre ?? ''} />
+          </FormField>
+          <FormField label="Dirección">
+            <input
+              name="direccion"
+              className="input"
+              required
+              defaultValue={editing?.direccion ?? ''}
+            />
+          </FormField>
+          <FormField label="Teléfono">
+            <input name="telefono" className="input" defaultValue={editing?.telefono ?? ''} />
+          </FormField>
+          <FormField label="Horario">
+            <input name="horario" className="input" defaultValue={editing?.horario ?? ''} />
+          </FormField>
+          <FormField label="Comentarios">
+            <input name="comentarios" className="input" defaultValue={editing?.comentarios ?? ''} />
+          </FormField>
           <FormField label="Habilitado">
             <input name="habilitado" type="checkbox" defaultChecked={editing?.habilitado ?? true} />
           </FormField>
-          <FormField label="Capacidad"><input name="capacidad" type="number" min={0} className="input" defaultValue={editing?.capacidad ?? ''} /></FormField>
+          <FormField label="Capacidad">
+            <input
+              name="capacidad"
+              type="number"
+              min={0}
+              className="input"
+              defaultValue={editing?.capacidad ?? ''}
+            />
+          </FormField>
           <div className="col-span-full flex justify-end gap-2">
-            <button type="button" className="btn" onClick={() => { setOpen(false); setEditing(null); }}>Cancelar</button>
-            <button type="submit" className="btn btn-primary">Guardar</button>
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                setOpen(false);
+                setEditing(null);
+              }}
+            >
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary">
+              Guardar
+            </button>
           </div>
         </form>
       </Modal>

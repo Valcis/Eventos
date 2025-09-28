@@ -13,7 +13,9 @@ export const reservaSchema = z.object({
   cliente: z.string().min(1),
   parrilladas: z.coerce.number().int().nonnegative(),
   picarones: z.coerce.number().int().nonnegative(),
-  tipoConsumo: z.custom<TipoConsumo>((v) => v === 'comer_aqui' || v === 'para_llevar' || v === 'domicilio'),
+  tipoConsumo: z.custom<TipoConsumo>(
+    (v) => v === 'comer_aqui' || v === 'para_llevar' || v === 'domicilio',
+  ),
   puntoRecogidaId: z.string().optional(),
   metodoPago: z.custom<MetodoPago>((v) => v === 'efectivo' || v === 'tarjeta' || v === 'bizum'),
   receptor: z.string().optional(),
@@ -63,7 +65,9 @@ export const precioSchema = z.object({
 
 export const selectorSchema = z.object({
   eventoId: z.string().min(1),
-  categoria: z.custom<SelectorCategoria>((v) => v === 'tipoConsumo' || v === 'metodoPago' || v === 'receptor' || v === 'puntoRecogida'),
+  categoria: z.custom<SelectorCategoria>(
+    (v) => v === 'tipoConsumo' || v === 'metodoPago' || v === 'receptor' || v === 'puntoRecogida',
+  ),
   valor: z.string().min(1),
   habilitado: z.coerce.boolean().default(true),
   orden: z.coerce.number().int().nonnegative(),

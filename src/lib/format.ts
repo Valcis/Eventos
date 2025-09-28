@@ -1,8 +1,14 @@
 // Centralized formatting utilities for ES/Euro/Madrid
 
 const currencyFmt = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
-const number2Fmt = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const number4Fmt = new Intl.NumberFormat('es-ES', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+const number2Fmt = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+const number4Fmt = new Intl.NumberFormat('es-ES', {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 4,
+});
 
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null || Number.isNaN(value)) return '';
