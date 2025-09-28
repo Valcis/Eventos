@@ -3,12 +3,14 @@
 Este documento describe la organización funcional y técnica del proyecto según los requisitos acordados, manteniendo el look & feel actual y enfocándonos en funcionalidad y versatilidad.
 
 ## Visión general
+
 - SPA con React + Vite + TypeScript.
 - Rutas por evento con pestañas: Resumen, Reservas, Ubicaciones, Gastos, Proveedores, Precios, Balance y Selectores (nuevo).
 - Persistencia local (localdb) por tabla.
 - Tablas con: orden asc/desc, paginación con tamaño seleccionable y número de página visible, filtros por columna.
 
 ## Rutas y páginas
+
 - `/` → Home
   - Crea/lista eventos y navega a `/eventos/:id`.
 - `/eventos/:id` → EventLayout (layout del evento + Tabs)
@@ -54,6 +56,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
     - Cada opción: valor, habilitado, orden.
 
 ## Cálculos y reglas
+
 - Resumen:
   - Gasto acumulado: suma(Gastos.total).
   - Reservas confirmadas: totales agregados de parrilladas y picarones.
@@ -68,6 +71,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
   - locked=true → deshabilita edición, borrado y cambios de campos; solo icono de candado para desbloqueo.
 
 ## Estructura de carpetas
+
 - src/
   - app/
     - router.tsx (definición central de rutas)
@@ -154,12 +158,12 @@ Este documento describe la organización funcional y técnica del proyecto segú
         totalPedido:number,
         pagado:boolean, comprobado:boolean, locked:boolean,
         createdAt, updatedAt, isActive
-      }
+        }
       - Ubicacion: {
         id, eventoId, nombre, direccion,
         telefono?:string, horario?:string, comentarios?:string,
         habilitado:boolean, createdAt, updatedAt, isActive
-      }
+        }
       - Gasto: {
         id, eventoId, producto:string, unidad:string, cantidad:number,
         tipoPrecio:'bruto'|'neto', tipoIVA:number,
@@ -168,7 +172,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
         pagador?:string, tienda?:string, notas?:string,
         comprobado:boolean, locked:boolean,
         createdAt, updatedAt, isActive
-      }
+        }
       - Precio: { id, eventoId, concepto:'parrilladas'|'picarones'|string, importe:number, createdAt, updatedAt, isActive }
       - Selector: { id, eventoId, categoria:'tipoConsumo'|'metodoPago'|'receptor'|'puntoRecogida', valor:string, habilitado:boolean, orden:number, createdAt, updatedAt, isActive }
 - styles/
@@ -180,13 +184,15 @@ Este documento describe la organización funcional y técnica del proyecto segú
 # Plan de ejecución y reparto
 
 ## Fases
-1) Infra UI y Tipos (base de datos local, DataTable genérica, tipos y esquemas)
-2) Pestañas funcionales (Reservas, Ubicaciones, Gastos, Precios, Selectores)
-3) Resumen (cálculos agregados) y reglas de aforo
-4) Pulido: filtros, paginación avanzada, persistencia de vista, bloqueo por fila
-5) Balance (posterior)
+
+1. Infra UI y Tipos (base de datos local, DataTable genérica, tipos y esquemas)
+2. Pestañas funcionales (Reservas, Ubicaciones, Gastos, Precios, Selectores)
+3. Resumen (cálculos agregados) y reglas de aforo
+4. Pulido: filtros, paginación avanzada, persistencia de vista, bloqueo por fila
+5. Balance (posterior)
 
 ## Tareas (AI Assistant)
+
 - Definir tipos en src/types/index.ts y esquemas Zod en lib/validators/schemas.ts.
 - Implementar DataTable genérica (sorting, paginación, filtros).
 - Implementar columns TS para cada tabla.
@@ -197,6 +203,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
 - Actualizar router y páginas base.
 
 ## Tareas (Junie)
+
 - Crear issues y milestones por fase.
 - Orquestar PRs por módulo (reservas, ubicaciones, gastos, precios, selectores).
 - Configurar CI (lint, typecheck, build) y reglas de revisión.
@@ -205,6 +212,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
 - Planificar Balance para siguiente iteración.
 
 ## Tareas (tú)
+
 - Validar modelo de datos (tipos y categorías de Selectores).
 - Revisar y ajustar textos/UX de formularios y columnas.
 - Confirmar reglas de IVA por defecto y ejemplos de precios.
@@ -212,6 +220,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
 - Aprobar PRs y decidir orden de despliegue de funcionalidades.
 
 ## Entregables por sprint
+
 - Sprint 1: DataTable + tipos/esquemas + Selectores (mínimo) + Reservas (tabla con totalPedido).
 - Sprint 2: Ubicaciones + Precios + integración Selectores con Reservas.
 - Sprint 3: Gastos (simple/detallada) + cálculos IVA.
@@ -219,6 +228,7 @@ Este documento describe la organización funcional y técnica del proyecto segú
 - Sprint 5: Balance (diseño y primeros cálculos).
 
 ## Definiciones clave de listo (DoD)
+
 - Tipado estricto sin `any`, imports sin alias.
 - Sorting/filtros/paginación funcionando por tabla.
 - Cálculos validados con pruebas de ejemplo (seed).
@@ -228,3 +238,9 @@ Este documento describe la organización funcional y técnica del proyecto segú
 ---
 
 ¿Doy inicio con Sprint 1 (tipos, schemas, DataTable y Selectores + Reservas base) y abro las primeras tareas en issues?
+
+## Validación y formato (implementación inicial)
+
+- Validadores por entidad en src/lib/validators/ (iniciado con gastos.ts). Se usan esquemas Zod y tipos inferidos.
+- Normalización de inputs (trim y límites) a través de los esquemas.
+- Formateo centralizado en src/lib/format.ts (moneda EUR y números con 2/4 decimales). Tablas de Gastos usan estos helpers.

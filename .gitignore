@@ -29,3 +29,6 @@ pnpm-debug.log*
 
 # Vite
 vite.config.ts.timestamp-*
+
+# Others
+raw_urls.txt

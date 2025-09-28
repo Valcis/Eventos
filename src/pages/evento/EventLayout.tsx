@@ -1,25 +1,27 @@
-import { Outlet, useNavigate, useParams } from 'react-router-dom'
-import TabsNav from '../../components/TabsNav'
-import { useCrud } from '../../lib/crud'
-import type { Evento } from '../../types'
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import TabsNav from '../../components/TabsNav';
+import { useCrud } from '../../lib/crud';
+import type { Evento } from '../../types';
 
 export default function EventLayout() {
-  const { id } = useParams<{ id: string }>()
-  const { items } = useCrud<Evento>('eventos')
-  const nav = useNavigate()
-  const ev = items.find(x => x.id === id)
-  if (!ev) { nav('/'); return null }
+  const { id } = useParams<{ id: string }>();
+  const { items } = useCrud<Evento>('eventos');
+  const nav = useNavigate();
+  const ev = items.find((x) => x.id === id);
+  if (!ev) {
+    nav('/');
+    return null;
+  }
 
-  const base = `/eventos/${id}/`
+  const base = `/eventos/${id}/`;
   const tabs = [
     { to: '', label: 'Resumen' },
     { to: 'asistentes', label: 'Asistentes/Reservas' },
-    { to: 'ubicaciones', label: 'Ubicaciones/Recogida' },
     { to: 'gastos', label: 'Gastos' },
-    { to: 'proveedores', label: 'Proveedores' },
     { to: 'precios', label: 'Precios' },
+    { to: 'proveedores', label: 'Proveedores' },
     { to: 'balance', label: 'Balance' },
-  ]
+  ];
 
   return (
     <section className="space-y-4">
@@ -32,5 +34,5 @@ export default function EventLayout() {
       <TabsNav base={base} items={tabs} />
       <Outlet />
     </section>
-  )
+  );
 }
