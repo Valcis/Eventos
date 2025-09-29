@@ -1,7 +1,7 @@
 import React, { StrictMode } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import App, { EventLayout } from './App';
+import App from './App';
 import './styles/index.css';
 
 // Páginas
@@ -11,6 +11,7 @@ import Selectores from './pages/evento/Selectores';
 import Resumen from './pages/evento/Resumen';
 import Precios from './pages/evento/Precios';
 import Gastos from './pages/evento/Gastos';
+import EventLayout from "./pages/evento/EventLayout";
 
 const router = createBrowserRouter([
   {

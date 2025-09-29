@@ -2,13 +2,13 @@ import React, {useMemo, useState} from 'react';
 import FilterBar from '../../components/ui/FilterBar/FilterBar';
 import DataTable from '../../components/ui/DataTable';
 import type {SortState} from '../../components/ui/DataTable/types';
-import {presets} from '../../lib/presets';
+import {gastosPreset} from '../../lib/gastos/presets';
 import {useToast} from '../../components/ui/Toast/useToast';
 import {useAlertConfirm} from '../../components/ui/AlertConfirm/useAlertConfirm';
-import type {Gasto} from '../../lib/shared/types';
+import type {Gasto} from '../../lib/gastos/types';
 
 export default function GastosPage(): JSX.Element {
-    const preset = presets.gastos;
+    const preset = gastosPreset;
 
     const [densityMode, setDensityMode] = useState<'detailed' | 'simple'>('detailed');
     const [page, setPage] = useState(1);

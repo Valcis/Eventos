@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useCrud } from '../../lib/shared/utils/crud';
 import { reservaSchema } from '../../lib/reservas/validators';
-import type { BaseEntity, Precio, Reserva, Ubicacion, Selector } from '../../lib/shared/types';
+import type {  Precio, Reserva, Ubicacion, Selector } from '../../lib/shared/types';
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
 import { calcularTotalPedido } from '../../lib/reservas/calculations';
