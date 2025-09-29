@@ -1,6 +1,6 @@
 import type {Gasto} from './types';
 
-export function calcularGasto(g: Pick<Gasto, 'tipoPrecio' | 'tipoIVA' | 'base' | 'total'>): {
+export function calcularGasto(g: Pick<Gasto>): {
     base: number;
     iva: number;
     total: number;

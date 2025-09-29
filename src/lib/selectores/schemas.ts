@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {registerSchema} from '../shared/ui/schemaRegistry';
 
 export const BaseItemSchema = z.object({
     id: z.string().min(1),
@@ -12,24 +11,19 @@ export const BaseItemSchema = z.object({
 export const ComercialSchema = BaseItemSchema.extend({
     telefono: z.string().trim().max(15).optional(),
 });
-registerSchema('comercial', ComercialSchema);
 
 export const MetodoPagoSchema = BaseItemSchema.extend({
     requiereReceptor: z.boolean().default(false),
 });
-registerSchema('metodoPago', MetodoPagoSchema);
 
 export const PagadorSchema = BaseItemSchema;
-registerSchema('pagador', PagadorSchema);
 
 export const TiendaSchema = BaseItemSchema.extend({
     direccion: z.string().trim().max(200).optional(),
     horario: z.string().trim().max(120).optional(),
 });
-registerSchema('tienda', TiendaSchema);
 
 export const UnidadSchema = BaseItemSchema;
-registerSchema('unidad', UnidadSchema);
 
 export const TipoPrecioSchema = BaseItemSchema.refine(
     (v) => ['con_iva', 'sin_iva'].includes(v.nombre),
@@ -42,13 +36,11 @@ export const TipoConsumoSchema = BaseItemSchema.refine(
 );
 
 export const ReceptorCobradorSchema = BaseItemSchema;
-registerSchema('receptorCobrador', ReceptorCobradorSchema);
 
 export const PuntoRecogidaSchema = BaseItemSchema.extend({
     direccion: z.string().trim().max(200).optional(),
     horario: z.string().trim().max(120).optional(),
 });
-registerSchema('puntoRecogida', PuntoRecogidaSchema);
 
 export type Comercial = z.infer<typeof ComercialSchema>;
 export type MetodoPago = z.infer<typeof MetodoPagoSchema>;

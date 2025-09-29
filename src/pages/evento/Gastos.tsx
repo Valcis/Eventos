@@ -6,10 +6,11 @@ import '../../lib/gastos/presets';          // (opcional) registerTablePreset/ge
 import React, {useMemo, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
-import {FilterBar} from '../../components/ui/FilterBar/FilterBar';
+import FilterBar from '../../components/ui/FilterBar/FilterBar';
 
 // Autoconfiguración dinámica desde schema + preset
-import {buildDataTableColumnsFor, buildFilterFieldsFor} from '../../lib/shared/ui/adapters/autoConfig';
+
+import {FilterField, FilterValues} from "../../components/ui/FilterBar/types";
 
 
 
@@ -40,9 +41,11 @@ export default function Gastos(): JSX.Element {
     // Props dinámicos para tus componentes
     const columns = useMemo(() => buildDataTableColumnsFor('gastos'), []);
     const filterFields = useMemo(() => buildFilterFieldsFor('gastos'), []);
+    console.log("filterFields: ", filterFields)
 
     // Estado de filtros
-    const [query, setQuery] = useState<Record<string, unknown>>({});
+    const [query, setQuery] = useState<FilterValues>({});
+
 
     // Filtrado simple (texto contiene / booleano exacto / number igual)
     const filteredRows = useMemo<Row[]>(() => {
@@ -57,6 +60,8 @@ export default function Gastos(): JSX.Element {
         );
     }, [rows, query]);
 
+
+
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -64,7 +69,8 @@ export default function Gastos(): JSX.Element {
                 {eventIdParam && <span className="text-xs text-gray-500">Evento: {eventIdParam}</span>}
             </div>
 
-            <FilterBar fields={filterFields} value={query} onChange={setQuery}/>
+            <FilterBar fields={filterFields} values={query} onChange={setQuery} title="Filtros" isCollapsible />;
+
 
             <DataTable columns={columns} rows={filteredRows}/>
         </div>

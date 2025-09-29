@@ -4,10 +4,3 @@ export interface BaseEntity {
     updatedAt: string;
     isActive: boolean;
 }
-
-export interface BaseItem {
-    id: string;
-    nombre: string;
-    isActive: boolean;
-    notas?: string;
-}

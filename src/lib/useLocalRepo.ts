@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import * as db from '../../../store/localdb';
-import type { BaseEntity } from '../types';
+import * as db from '../store/localdb';
+import {BaseEntity} from "./globalTypes";
+
 
 export type TableName =
     | 'eventos'

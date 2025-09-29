@@ -1,38 +1,18 @@
-// src/components/ui/FilterBar/types.ts
-export type Primitive = string | number | boolean | '' | null | undefined | Date;
-
-export type FilterOperator =
-    | 'contains'
-    | 'equals'
-    | 'startsWith'
-    | 'endsWith'
-    | 'gt'
-    | 'gte'
-    | 'lt'
-    | 'lte'
-    | 'in';
-
-export type FilterFieldType = 'text' | 'number' | 'select' | 'date' | 'boolean';
-
-export interface SelectOption {
-    label: string;
-    value: string;
+// strict, sin any, preparado para exactOptionalPropertyTypes
+export interface FilterOption {
+    readonly value: string;
+    readonly label: string;
 }
 
-export interface FilterField<T = unknown> {
-    /** Column id or key in the row. */
-    id: keyof T | string;
-    label: string;
-    type: FilterFieldType;
+export type FilterKind = 'text' | 'number' | 'select' | 'date' | 'boolean';
 
-    /** Custom predicate overrides default behavior for type+operator. */
-    predicate?: (row: T, value: Primitive) => boolean;
-
-    /** For select fields. */
-    options?: SelectOption[];
-
-    /** Default value shown when mounting. */
-    defaultValue?: Primitive;
+export interface FilterField {
+    id: string;           // clave en tu dataset/estado
+    label: string;        // etiqueta visible
+    type: FilterKind;
+    // OJO: con exactOptionalPropertyTypes, hay que declarar | undefined explícitamente
+    options?: ReadonlyArray<FilterOption> | undefined; // solo para type='select'
 }
 
-export type FilterValues = Record<string, Primitive>;
+export type FilterScalar = string | number | boolean | null | undefined | Date;
+export type FilterValues = Readonly<Record<string, FilterScalar>>;

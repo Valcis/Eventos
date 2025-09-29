@@ -1,184 +1,204 @@
-// src/components/ui/FilterBar/FilterBar.tsx
-import React, { useEffect, useMemo, useState } from 'react';
-import type { FilterField, FilterValues, Primitive } from './types';
+import {useMemo, useState} from 'react';
+import type {FilterField, FilterValues, FilterKind} from './types';
 
-export interface FilterBarProps<T = unknown> {
-    fields: FilterField<T>[];
-    values: FilterValues;
-    onChange: (values: FilterValues) => void;
-
-    isInline?: boolean;
-    debounceMs?: number;
-    className?: string;
-
+type Props = {
+    fields: ReadonlyArray<FilterField>;
+    values: FilterValues; // controlado desde fuera
+    onChange: (next: FilterValues) => void;
     title?: string;
+    className?: string;
     isCollapsible?: boolean;
     isOpen?: boolean;
-    onToggle?: (open: boolean) => void;
-
-    // Añadidos (las páginas los usan)
-    onSearch?: () => void;
     onClear?: () => void;
+};
+
+function classNames(...xs: Array<string | false | null | undefined>): string {
+    return xs.filter(Boolean).join(' ');
 }
 
-const DEFAULT_DEBOUNCE = 250;
+// Normaliza lo que pueda venir indefinido en values
+function readValue(values: FilterValues, id: string): string | number | boolean | '' {
+    const v = values[id];
+    if (v === null || v === undefined) return '';
+    if (v instanceof Date) return v.toISOString().slice(0, 10); // yyyy-mm-dd
+    return v as string | number | boolean;
+}
 
-/** Generic, reusable filter bar. Controlled via `values` + `onChange`. */
-export function FilterBar<T>({
-                                 fields,
-                                 values,
-                                 onChange,
-                                 isInline = true,
-                                 debounceMs = DEFAULT_DEBOUNCE,
-                                 className,
-                                 title,
-                                 isCollapsible = true,
-                                 isOpen,
-                                 onToggle,
-                                 onSearch,
-                                 onClear,
-                             }: FilterBarProps<T>) {
-    const [local, setLocal] = useState(values);
-    const [openInternal, setOpenInternal] = useState(true);
-    const open = typeof isOpen === 'boolean' ? isOpen : openInternal;
+function coerce(kind: FilterKind, raw: string | boolean): string | number | boolean | null {
+    if (kind === 'boolean') return Boolean(raw);
+    if (kind === 'number') {
+        const n = typeof raw === 'string' ? Number(raw) : NaN;
+        return Number.isFinite(n) ? n : null;
+    }
+    if (kind === 'date') {
+        // guardamos como string ISO yyyy-mm-dd para no mezclar zonas horarias
+        return typeof raw === 'string' && raw.length > 0 ? raw : '';
+    }
+    // text / select
+    return typeof raw === 'string' ? raw : '';
+}
 
-    function toggleOpen() {
-        const next = !open;
-        onToggle ? onToggle(next) : setOpenInternal(next);
+export default function FilterBar({
+                                      fields,
+                                      values,
+                                      onChange,
+                                      title = 'Filtros',
+                                      className,
+                                      isCollapsible = false,
+                                      isOpen: isOpenProp,
+                                      onClear,
+                                  }: Props): JSX.Element | null {
+    // Guard: sin campos no renderizamos nada (mejor UX que crashear)
+    if (!fields || fields.length === 0) return null;
+
+    // estado de colapso controlado/semicontrolado
+    const [internalOpen, setInternalOpen] = useState<boolean>(true);
+    const isOpen = isCollapsible ? (isOpenProp ?? internalOpen) : true;
+
+    const safeFields = useMemo(() => {
+        // filtramos cosas raras y evitamos ids vacíos
+        const unique = new Set<string>();
+        return fields.filter(f => {
+            const ok = !!f && typeof f.id === 'string' && f.id.trim().length > 0 && typeof f.label === 'string';
+            if (!ok) return false;
+            if (unique.has(f.id)) return false;
+            unique.add(f.id);
+            return true;
+        });
+    }, [fields]);
+
+    function update(id: string, kind: FilterKind, raw: string | boolean): void {
+        const nextVal = coerce(kind, raw);
+        const next: Record<string, unknown> = {...values};
+        // no metemos undefined explícito; borramos si está vacío
+        if (nextVal === '' || nextVal === null) {
+            delete next[id];
+        } else {
+            next[id] = nextVal;
+        }
+        onChange(next);
     }
 
-    // Sync external changes in case the parent resets filters.
-    useEffect(() => setLocal(values), [values]);
+    function renderField(f: FilterField): JSX.Element {
+        const v = readValue(values, f.id);
 
-    // Debounced commit for text/number.
-    useEffect(() => {
-        const handle = setTimeout(() => {
-            if (JSON.stringify(local) !== JSON.stringify(values)) {
-                onChange(local);
-            }
-        }, debounceMs);
-        return () => clearTimeout(handle);
-    }, [local, values, onChange, debounceMs]);
-
-    const containerCls = useMemo(
-        () =>
-            `${isInline ? 'flex flex-wrap items-end gap-3' : 'grid gap-3'} bg-white p-3 rounded-2xl shadow-sm ${
-                className ?? ''
-            }`,
-        [isInline, className],
-    );
-
-    const labelCls = 'text-sm font-medium text-zinc-700';
-    const inputCls =
-        'w-full rounded-xl border border-zinc-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white';
-
-    function setValue(id: string, value: Primitive, instant = false) {
-        if (instant) {
-            onChange({ ...local, [id]: value });
-            setLocal((prev) => ({ ...prev, [id]: value }));
-            return;
+        if (f.type === 'select') {
+            const hasOptions = Array.isArray(f.options) && f.options.length > 0;
+            return (
+                <label key={f.id} className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">{f.label}</span>
+                    <select
+                        value={typeof v === 'string' ? v : ''}
+                        onChange={(e) => update(f.id, f.type, e.target.value)}
+                        className="border rounded-lg px-3 py-2"
+                        disabled={!hasOptions}
+                    >
+                        <option value="">{hasOptions ? '— Selecciona —' : 'Sin opciones'}</option>
+                        {hasOptions &&
+                            f.options!.map(opt => (
+                                <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                    </select>
+                </label>
+            );
         }
-        setLocal((prev) => ({ ...prev, [id]: value }));
+
+        if (f.type === 'boolean') {
+            return (
+                <label key={f.id} className="inline-flex items-center gap-2">
+                    <input
+                        type="checkbox"
+                        checked={Boolean(v)}
+                        onChange={(e) => update(f.id, f.type, e.target.checked)}
+                        className="h-4 w-4"
+                    />
+                    <span className="text-sm">{f.label}</span>
+                </label>
+            );
+        }
+
+        if (f.type === 'number') {
+            return (
+                <label key={f.id} className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">{f.label}</span>
+                    <input
+                        inputMode="decimal"
+                        type="number"
+                        value={typeof v === 'number' || typeof v === 'string' ? String(v) : ''}
+                        onChange={(e) => update(f.id, f.type, e.target.value)}
+                        className="border rounded-lg px-3 py-2"
+                    />
+                </label>
+            );
+        }
+
+        if (f.type === 'date') {
+            return (
+                <label key={f.id} className="flex flex-col gap-1">
+                    <span className="text-sm font-medium">{f.label}</span>
+                    <input
+                        type="date"
+                        value={typeof v === 'string' ? v : ''}
+                        onChange={(e) => update(f.id, f.type, e.target.value)}
+                        className="border rounded-lg px-3 py-2"
+                    />
+                </label>
+            );
+        }
+
+        // text (por defecto)
+        return (
+            <label key={f.id} className="flex flex-col gap-1">
+                <span className="text-sm font-medium">{f.label}</span>
+                <input
+                    type="text"
+                    value={typeof v === 'string' || typeof v === 'number' ? String(v) : ''}
+                    onChange={(e) => update(f.id, f.type, e.target.value)}
+                    className="border rounded-lg px-3 py-2"
+                />
+            </label>
+        );
     }
 
     return (
-        <div className={containerCls}>
-            {/* Cabecera: título + botón mostrar/ocultar */}
-            <div className="flex items-center justify-between w-full">
-                <div className="text-base font-semibold">{title ?? 'Filtros'}</div>
+        <section className={classNames('w-full border rounded-2xl p-3 md:p-4 bg-white', className)}>
+            <header className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">{title}</h3>
                 {isCollapsible && (
-                    <button type="button" className="text-sm underline" onClick={toggleOpen}>
-                        {open ? 'Ocultar filtros' : 'Mostrar filtros'}
+                    <button
+                        type="button"
+                        onClick={() => setInternalOpen(o => !o)}
+                        className="text-sm underline"
+                    >
+                        {isOpen ? 'Ocultar' : 'Mostrar'}
                     </button>
                 )}
-            </div>
+            </header>
 
-            {/* Formulario de filtros */}
-            {open && (
-                <div className={`w-full grid grid-cols-1 md:grid-cols-4 gap-3`}>
-                    {fields.map((f) => {
-                        const id = String(f.id);
-                        const val = (local as Record<string, Primitive>)[id] ?? f.defaultValue ?? '';
-
-                        return (
-                            <label key={id} className="grid gap-1">
-                                <span className={labelCls}>{f.label}</span>
-
-                                {f.type === 'text' && (
-                                    <input
-                                        className={inputCls}
-                                        value={String(val)}
-                                        onChange={(e) => setValue(id, e.target.value)}
-                                        placeholder={`Filtrar por ${f.label.toLowerCase()}`}
-                                    />
-                                )}
-
-                                {f.type === 'number' && (
-                                    <input
-                                        className={inputCls}
-                                        type="number"
-                                        value={val === '' ? '' : Number(val)}
-                                        onChange={(e) => setValue(id, e.target.value === '' ? '' : Number(e.target.value))}
-                                        placeholder={`≥ ${f.label.toLowerCase()}`}
-                                    />
-                                )}
-
-                                {f.type === 'select' && (
-                                    <select
-                                        className={inputCls}
-                                        value={String(val)}
-                                        onChange={(e) => setValue(id, e.target.value, true)}
-                                    >
-                                        <option value="">—</option>
-                                        {(f.options ?? []).map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
-
-                                {f.type === 'boolean' && (
-                                    <select
-                                        className={inputCls}
-                                        value={val === '' ? '' : val ? 'true' : 'false'}
-                                        onChange={(e) => setValue(id, e.target.value === '' ? '' : e.target.value === 'true', true)}
-                                    >
-                                        <option value="">—</option>
-                                        <option value="true">Sí</option>
-                                        <option value="false">No</option>
-                                    </select>
-                                )}
-
-                                {f.type === 'date' && (
-                                    <input
-                                        className={inputCls}
-                                        type="date"
-                                        value={typeof val === 'string' ? val : ''}
-                                        onChange={(e) => setValue(id, e.target.value, true)}
-                                    />
-                                )}
-                            </label>
-                        );
-                    })}
+            {isOpen && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {safeFields.map(renderField)}
                 </div>
             )}
 
-            {/* Acciones */}
-            <div className="flex gap-2 mt-2">
-                {onSearch && (
-                    <button type="button" className="px-3 py-1 rounded-lg bg-indigo-600 text-white" onClick={onSearch}>
-                        Buscar
-                    </button>
-                )}
+            <footer className="mt-3 flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => onChange({})}
+                    className="text-sm px-3 py-1 border rounded-lg"
+                >
+                    Limpiar
+                </button>
                 {onClear && (
-                    <button type="button" className="px-3 py-1 rounded-lg border" onClick={onClear}>
-                        Limpiar
+                    <button
+                        type="button"
+                        onClick={onClear}
+                        className="text-sm px-3 py-1 border rounded-lg"
+                    >
+                        Reset preset
                     </button>
                 )}
-            </div>
-        </div>
+            </footer>
+        </section>
     );
 }
-
-export default FilterBar;

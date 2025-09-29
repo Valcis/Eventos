@@ -2,10 +2,10 @@
 import React, {useMemo, useState} from 'react';
 import {useSearchParams} from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
-import {FilterBar} from '../../components/ui/FilterBar/FilterBar';
+import FilterBar from '../../components/ui/FilterBar/FilterBar';
 
 // 🔗 Utilidades de autoconfiguración (generadas en shared/ui/adapters)
-import {buildDataTableColumnsFor, buildFilterFieldsFor} from '../../lib/shared/ui/adapters/autoConfig';
+
 
 // 📌 Asegúrate de que en el bootstrap de UI se hayan registrado schemas y presets:
 //   import '../../lib/reservas/schemas';          // registerSchema('reservas', ReservaUpsertSchema)

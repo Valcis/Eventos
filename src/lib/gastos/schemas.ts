@@ -1,5 +1,4 @@
 import {z} from 'zod';
-import {registerSchema} from '../shared/ui/schemaRegistry';
 
 export const GastoUpsertSchema = z.object({
     id: z.string().uuid().optional(),
@@ -24,5 +23,3 @@ export const GastoUpsertSchema = z.object({
     isActive: z.boolean().default(true),
 });
 export type GastoUpsert = z.infer<typeof GastoUpsertSchema>;
-
-registerSchema('gastos', GastoUpsertSchema);

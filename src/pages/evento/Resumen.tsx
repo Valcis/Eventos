@@ -3,7 +3,8 @@ import {useParams} from 'react-router-dom';
 import {calcularResumen} from '../../lib/resumen/calculations';
 import {Gasto} from "../../lib/gastos/types";
 import {Reserva} from "../../lib/reservas/types";
-import {useCrud} from "../../lib/shared/hooks/useLocalRepo";
+import {useCrud} from "../../lib/useLocalRepo";
+
 
 export default function Resumen() {
     const {id: eventoId} = useParams<{ id: string }>();

@@ -1,5 +1,5 @@
 import {z} from 'zod';
-import {registerSchema} from "../shared/ui/schemaRegistry";
+
 
 
 export const EventoUpsertSchema = z.object({
@@ -15,4 +15,3 @@ export const EventoUpsertSchema = z.object({
 });
 export type EventoUpsert = z.infer<typeof EventoUpsertSchema>;
 
-registerSchema('eventos', EventoUpsertSchema);

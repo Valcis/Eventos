@@ -3,8 +3,9 @@ import {Link, useNavigate} from 'react-router-dom';
 import Modal from '../components/Modal';
 import FormField from '../components/FormField';
 import type {Evento} from '../lib/evento/types';
-import {useCrud} from "../lib/shared/hooks/useLocalRepo";
+
 import {EventoUpsertSchema} from "../lib/evento/schemas";
+import {useCrud} from "../lib/useLocalRepo";
 
 export default function Home() {
     const {items, create} = useCrud<Evento>('eventos');
