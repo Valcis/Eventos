@@ -1,7 +1,7 @@
 import {Outlet, useNavigate, useParams} from 'react-router-dom';
 import TabsNav from '../../components/TabsNav';
 import {useCrud} from '../../lib/shared/utils/crud';
-import type {Evento} from '../../lib/shared/types';
+import type {Evento} from '../../lib/evento/types';
 
 export default function EventLayout() {
     const {id} = useParams<{ id: string }>();

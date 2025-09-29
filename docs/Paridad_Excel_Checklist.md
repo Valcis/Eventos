@@ -58,10 +58,8 @@ El archivo Excel funciona como un **mini-ERP** para gestionar **ventas** (pedido
 | Gastos e Ingredientes  | **Gasto**: coherencia IVA/Base/Total + **packs**                       | Página de Gastos + columnas | Falta **schema** + **funciones de dominio** + **tests**                           |
 | Selectores             | Catálogos maestros                                                     | Página Selectores           | Falta tipado/validators por catálogo + uso uniforme                               |
 | Config                 | Parámetros `PRECIO_*`                                                  | Seed/Store                  | Falta **módulo Config** con hook/servicio e integración en cálculo                |
-| Puntos de Recogida     | Maestro de puntos                                                      | Página Ubicaciones          | Verificar mapeo exacto y uso en reglas de Pedido                                  |
 | Validaciones generales | Normalización + error handling                                         | Parcial                     | Faltan **normalizers** y aplicación sistemática                                   |
 | Formatos               | € y fechas ES                                                          | Parcial                     | Faltan **formatters** centralizados                                               |
-| Calidad                | Pruebas de dominio/UX                                                  | Ausente                     | Faltan **tests** (cálculos, reglas, render)                                       |
 
 ---
 
@@ -235,18 +233,11 @@ export function calcularTotalPedido(
 
 ### E. Integración en páginas
 
-- [ ] Aplicar **normalize → validate (safeParse) → guardar/errores** en: `Pedidos/Reservas`, `Gastos`, `Precios`, `Ubicaciones`, `Proveedores`.
+- [ ] Aplicar **normalize → validate (safeParse) → guardar/errores** en: `Reservas`, `Gastos`, `Precios`.
 - [ ] Usar `fmtMoney`/`fmtDate` en las columnas y totales.
-- [ ] Asegurar que `Ubicaciones` (puntos) se utiliza cuando `tipoConsumo="recoger"` (y se prohíbe si `comer_aqui`).
 
-### F. Tests mínimos
 
-- [ ] Pedido.total: combinaciones `(comer_aqui/recoger) × cantidades`.
-- [ ] Pedido reglas: (sin punto/ con punto) y (bizum con receptor / otros sin receptor).
-- [ ] Gasto: `(sin_iva|con_iva) × (4|10|21) × (pack|no pack)`; bordes de redondeo.
-- [ ] Render de tablas: formatos € y fecha, columnas y sorting básico.
-
-### G. Infra (recomendado)
+### F. Infra (recomendado)
 
 - [ ] `ErrorBoundary` básico, `toast` centralizado, `logger` por entorno, `Skeleton` de carga.
 - [ ] Store local: **namespacing por evento** y **versión de esquema** (migraciones simples).

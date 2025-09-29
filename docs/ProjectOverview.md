@@ -186,14 +186,14 @@ Este documento describe la organización funcional y técnica del proyecto segú
 ## Fases
 
 1. Infra UI y Tipos (base de datos local, DataTable genérica, tipos y esquemas)
-2. Pestañas funcionales (Reservas, Ubicaciones, Gastos, Precios, Selectores)
+2. Pestañas funcionales (Reservas, Gastos, Precios, Selectores)
 3. Resumen (cálculos agregados) y reglas de aforo
 4. Pulido: filtros, paginación avanzada, persistencia de vista, bloqueo por fila
 5. Balance (posterior)
 
 ## Tareas (AI Assistant)
 
-- Definir tipos en src/types/index.ts y esquemas Zod en lib/validators/schemas.ts.
+- Definir tipos y esquemas Zod en lib/[tab_name]/*.
 - Implementar DataTable genérica (sorting, paginación, filtros).
 - Implementar columns TS para cada tabla.
 - Implementar calculations (reservas, gastos, resumen).
