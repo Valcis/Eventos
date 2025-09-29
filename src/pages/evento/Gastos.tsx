@@ -1,67 +1,72 @@
+// Asegúrate de que en el bootstrap UI se registren schemas y presets de "gastos":
+import '../../lib/gastos/schemas';      // registerSchema('gastos', GastoUpsertSchema)
+import '../../lib/gastos/presets';          // (opcional) registerTablePreset/getSearchPreset
 
-import React, { useMemo, useState } from 'react';
-import FilterBar from '../../components/ui/FilterBar/FilterBar';
+
+import React, {useMemo, useState} from 'react';
+import {useSearchParams} from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
-import type { SortState } from '../../components/ui/DataTable/types';
-import { gastosPreset as preset } from '../../lib/gastos/presets';
-import type { Gasto } from '../../lib/gastos/types';
-import { useToast } from '../../components/ui/Toast/useToast';
-import { useAlertConfirm } from '../../components/ui/AlertConfirm/useAlertConfirm';
+import {FilterBar} from '../../components/ui/FilterBar/FilterBar';
 
-export default function GastosPage(): JSX.Element {
-    const [densityMode, setDensityMode] = useState<'detailed' | 'simple'>('detailed');
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(preset.defaultPageSize ?? 20);
-    const [sort, setSort] = useState<SortState>(preset.defaultSort ?? { columnId: null, direction: null });
-    const [filters, setFilters] = useState<Record<string, unknown>>({ q: '' });
+// Autoconfiguración dinámica desde schema + preset
+import {buildDataTableColumnsFor, buildFilterFieldsFor} from '../../lib/shared/ui/adapters/autoConfig';
 
-    const rows: Gasto[] = []; // TODO: trae datos reales
 
-    const columns = useMemo(
-        () => (densityMode === 'detailed' ? preset.columnsDetailed : (preset.columnsSimple ?? preset.columnsDetailed.filter(c => c.isSimpleKey))),
-        [densityMode],
-    );
 
-    const { showToast } = useToast();
-    const { confirm } = useAlertConfirm();
+type Row = Record<string, unknown>;
 
-    async function onCreate() { showToast({ type: 'info', message: 'Abrir modal de creación (Gasto)' }); }
-    async function onInfo(row: Gasto) { showToast({ type: 'default', message: `Info: ${row.producto}` }); }
-    async function onEdit(row: Gasto) { showToast({ type: 'default', message: `Editar: ${row.producto}` }); }
-    async function onDelete(row: Gasto) {
-        const ok = await confirm({ title: 'Borrar gasto', description: '¿Seguro que quieres borrar este gasto?' });
-        if (ok) showToast({ type: 'success', message: 'Gasto eliminado' });
+function readGastos(): Row[] {
+    try {
+        const raw = localStorage.getItem('gastos');
+        if (!raw) return [];
+        const arr = JSON.parse(raw);
+        return Array.isArray(arr) ? (arr as Row[]) : [];
+    } catch {
+        return [];
     }
-    async function onBlock(row: Gasto) {
-        const ok = await confirm({ title: 'Bloquear gasto', description: '¿Seguro que quieres bloquear este gasto?' });
-        if (ok) showToast({ type: 'success', message: 'Gasto bloqueado' });
-    }
+}
+
+export default function Gastos(): JSX.Element {
+    const [params] = useSearchParams();
+    const eventIdParam = params.get('eventId') ?? undefined;
+
+    // Datos
+    const all = useMemo(() => readGastos(), []);
+    const rows = useMemo<Row[]>(() => {
+        if (!eventIdParam) return all;
+        return all.filter(r => String(r.eventoId ?? '') === eventIdParam);
+    }, [all, eventIdParam]);
+
+    // Props dinámicos para tus componentes
+    const columns = useMemo(() => buildDataTableColumnsFor('gastos'), []);
+    const filterFields = useMemo(() => buildFilterFieldsFor('gastos'), []);
+
+    // Estado de filtros
+    const [query, setQuery] = useState<Record<string, unknown>>({});
+
+    // Filtrado simple (texto contiene / booleano exacto / number igual)
+    const filteredRows = useMemo<Row[]>(() => {
+        return rows.filter(r =>
+            Object.entries(query).every(([k, v]) => {
+                if (v == null || v === '') return true;
+                const cell = r[k];
+                if (typeof v === 'boolean') return cell === v;
+                if (typeof v === 'number') return Number(cell) === v;
+                return String(cell ?? '').toLowerCase().includes(String(v).toLowerCase());
+            })
+        );
+    }, [rows, query]);
 
     return (
-        <>
-            <FilterBar fields={preset.filters} values={filters} onChange={setFilters} onClear={() => setFilters({ q: '' })} isCollapsible />
-            <DataTable<Gasto>
-                rows={rows}
-                columns={columns}
-                sort={sort}
-                onSortChange={setSort}
-                densityMode={densityMode}
-                showDensityToggle
-                onCreate={onCreate}
-                page={page}
-                pageSize={pageSize}
-                onPageChange={setPage}
-                onPageSizeChange={setPageSize}
-                renderActions={(row) => (
-                    <div className="flex gap-2">
-                        <button onClick={() => onInfo(row)}>ℹ️</button>
-                        <button onClick={() => onEdit(row)}>✏️</button>
-                        <button onClick={() => onDelete(row)}>🗑️</button>
-                        <button onClick={() => onBlock(row)}>⛔</button>
-                    </div>
-                )}
-                emptyState="Sin gastos"
-            />
-        </>
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Gastos</h2>
+                {eventIdParam && <span className="text-xs text-gray-500">Evento: {eventIdParam}</span>}
+            </div>
+
+            <FilterBar fields={filterFields} value={query} onChange={setQuery}/>
+
+            <DataTable columns={columns} rows={filteredRows}/>
+        </div>
     );
 }

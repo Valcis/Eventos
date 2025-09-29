@@ -1,4 +1,6 @@
-import { z } from 'zod';
+import {z} from 'zod';
+import {registerSchema} from "../shared/ui/schemaRegistry";
+
 
 export const EventoUpsertSchema = z.object({
     id: z.string().uuid().optional(),
@@ -12,3 +14,5 @@ export const EventoUpsertSchema = z.object({
     isActive: z.boolean().default(true),
 });
 export type EventoUpsert = z.infer<typeof EventoUpsertSchema>;
+
+registerSchema('eventos', EventoUpsertSchema);

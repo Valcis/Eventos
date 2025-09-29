@@ -1,80 +1,80 @@
+// src/pages/evento/Reservas.tsx
 import React, {useMemo, useState} from 'react';
-import FilterBar from '../../components/ui/FilterBar/FilterBar';
+import {useSearchParams} from 'react-router-dom';
 import DataTable from '../../components/ui/DataTable';
-import type {SortState} from '../../components/ui/DataTable/types';
-import {reservasPreset as preset} from '../../lib/reservas/presets';
-import type {Reserva} from '../../lib/reservas/types';
-import {useToast} from '../../components/ui/Toast/useToast';
-import {useAlertConfirm} from '../../components/ui/AlertConfirm/useAlertConfirm';
+import {FilterBar} from '../../components/ui/FilterBar/FilterBar';
 
-export default function ReservasPage(): JSX.Element {
-    const [densityMode, setDensityMode] = useState<'detailed' | 'simple'>('detailed');
-    const [page, setPage] = useState(1);
-    const [pageSize, setPageSize] = useState(preset.defaultPageSize ?? 20);
-    const [sort, setSort] = useState<SortState>(preset.defaultSort ?? {columnId: null, direction: null});
-    const [filters, setFilters] = useState<Record<string, unknown>>({q: ''});
+// 🔗 Utilidades de autoconfiguración (generadas en shared/ui/adapters)
+import {buildDataTableColumnsFor, buildFilterFieldsFor} from '../../lib/shared/ui/adapters/autoConfig';
 
-    const rows: Reserva[] = []; // TODO: datos reales
+// 📌 Asegúrate de que en el bootstrap de UI se hayan registrado schemas y presets:
+//   import '../../lib/reservas/schemas';          // registerSchema('reservas', ReservaUpsertSchema)
+//   import '../../lib/reservas/presets/register'; // (opcional) presets de tabla/búsqueda
 
-    const columns = useMemo(
-        () => (densityMode === 'detailed' ? preset.columnsDetailed : (preset.columnsSimple ?? preset.columnsDetailed.filter(c => c.isSimpleKey))),
-        [densityMode],
-    );
-
-    const {showToast} = useToast();
-    const {confirm} = useAlertConfirm();
-
-    async function onCreate() {
-        showToast({type: 'info', message: 'Abrir modal de creación (Reserva)'});
+// ✅ Leemos datos de localStorage como en el resto de taps (sin alias)
+function readReservas(): Record<string, unknown>[] {
+    try {
+        const raw = localStorage.getItem('reservas');
+        if (!raw) return [];
+        const arr = JSON.parse(raw) as unknown;
+        return Array.isArray(arr) ? (arr as Record<string, unknown>[]) : [];
+    } catch {
+        return [];
     }
+}
 
-    async function onInfo(row: Reserva) {
-        showToast({type: 'default', message: `Info: ${row.cliente}`});
-    }
+export default function Reservas(): JSX.Element {
+    const [params] = useSearchParams();
+    const eventIdParam = params.get('eventId') ?? undefined;
 
-    async function onEdit(row: Reserva) {
-        showToast({type: 'default', message: `Editar: ${row.cliente}`});
-    }
+    // Datos (filtrados por evento si llega el parámetro)
+    const all = useMemo(() => readReservas(), []);
+    const rows = useMemo(() => {
+        if (!eventIdParam) return all;
+        return all.filter(r => String(r.eventoId ?? '') === eventIdParam);
+    }, [all, eventIdParam]);
 
-    async function onDelete(row: Reserva) {
-        const ok = await confirm({title: 'Borrar reserva', description: '¿Seguro que quieres borrar esta reserva?'});
-        if (ok) showToast({type: 'success', message: 'Reserva eliminada'});
-    }
+    // 🔧 Autoconfiguración 100% dinámica desde el schema (más preset si existe)
+    const columns = useMemo(() => buildDataTableColumnsFor('reservas'), []);
+    const filterFields = useMemo(() => buildFilterFieldsFor('reservas'), []);
 
-    async function onBlock(row: Reserva) {
-        const ok = await confirm({
-            title: 'Bloquear reserva',
-            description: '¿Seguro que quieres bloquear esta reserva?'
-        });
-        if (ok) showToast({type: 'success', message: 'Reserva bloqueada'});
-    }
+    // Estado del buscador (clave → valor)
+    const [query, setQuery] = useState<Record<string, unknown>>({});
+
+    // Filtro simple (texto contiene / booleano exacto / number =)
+    const filteredRows = useMemo(() => {
+        return rows.filter(r =>
+            Object.entries(query).every(([k, v]) => {
+                if (v == null || v === '') return true;
+                const cell = r[k];
+                if (typeof v === 'boolean') return cell === v;
+                if (typeof v === 'number') return Number(cell) === v;
+                return String(cell ?? '').toLowerCase().includes(String(v).toLowerCase());
+            })
+        );
+    }, [rows, query]);
 
     return (
-        <>
-            <FilterBar fields={preset.filters} values={filters} onChange={setFilters}
-                       onClear={() => setFilters({q: ''})} isCollapsible/>
-            <DataTable<Reserva>
-                rows={rows}
-                columns={columns}
-                sort={sort}
-                onSortChange={setSort}
-                densityMode={densityMode}
-                showDensityToggle
-                onCreate={onCreate}
-                page={page}
-                pageSize={pageSize}
-                onPageChange={setPage}
-                onPageSizeChange={setPageSize}
-                renderActions={(row) => (
-                    <div className="flex gap-2">
-                        <button onClick={() => onInfo(row)}>ℹ️</button>
-                        <button onClick={() => onEdit(row)}>✏️</button>
-                        <button onClick={() => onDelete(row)}>🗑️</button>
-                        <button onClick={() => onBlock(row)}>⛔</button>
-                    </div>
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Reservas</h2>
+                {eventIdParam && (
+                    <span className="text-xs text-gray-500">Evento: {eventIdParam}</span>
                 )}
-                emptyState="Sin reservas"
+            </div>
+
+            {/* 🔎 FilterBar dinámico (lee todo del schema/preset) */}
+            <FilterBar
+                fields={filterFields}
+                value={query}
+                onChange={setQuery}
             />
-        </>
+
+            {/* 📋 DataTable dinámico (columnas desde schema/preset) */}
+            <DataTable
+                columns={columns}
+                rows={filteredRows}
+            />
+        </div>
     );
 }

@@ -1,13 +1,12 @@
-import type { BaseEntity } from '../lib/shared/types';
+import type {BaseEntity, BaseItem} from '../lib/shared/types';
 import type {
   SelectorKind,
-  BaseItem,
   MetodoPago,
   Pagador,
   Tienda,
   Unidad,
   TipoConsumo,
-  BenefBizum,
+  ReceptorCobrador,
   PuntoRecogida,
 } from '../lib/selectores/types';
 
@@ -93,17 +92,17 @@ export function seedSelectorsIfEmpty(eventId: string) {
     if (getSelectors<T>(eventId, kind).length === 0) setSelectors(eventId, kind, items);
   };
   ensure<Unidad>('unidades', [
-    { id: crypto.randomUUID(), nombre: 'und', activo: true },
-    { id: crypto.randomUUID(), nombre: 'kg', activo: true },
-    { id: crypto.randomUUID(), nombre: 'pack', activo: true },
+    { id: crypto.randomUUID(), nombre: 'und', isActive: true },
+    { id: crypto.randomUUID(), nombre: 'kg', isActive: true },
+    { id: crypto.randomUUID(), nombre: 'pack', isActive: true },
   ]);
   ensure<TipoConsumo>('tipoConsumo', [
-    { id: crypto.randomUUID(), nombre: 'comer_aqui', activo: true },
-    { id: crypto.randomUUID(), nombre: 'recoger', activo: true },
+    { id: crypto.randomUUID(), nombre: 'comer_aqui', isActive: true },
+    { id: crypto.randomUUID(), nombre: 'recoger', isActive: true },
   ]);
   ensure<MetodoPago>('metodosPago', [
-    { id: crypto.randomUUID(), nombre: 'bizum', activo: true, requiereReceptor: true },
-    { id: crypto.randomUUID(), nombre: 'efectivo', activo: true, requiereReceptor: false },
-    { id: crypto.randomUUID(), nombre: 'tarjeta', activo: true, requiereReceptor: false },
+    { id: crypto.randomUUID(), nombre: 'bizum', isActive: true, requiereReceptor: true },
+    { id: crypto.randomUUID(), nombre: 'efectivo', isActive: true, requiereReceptor: false },
+    { id: crypto.randomUUID(), nombre: 'tarjeta', isActive: true, requiereReceptor: false },
   ]);
 }

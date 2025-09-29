@@ -1,4 +1,6 @@
 import {z} from 'zod';
+import {registerSchema} from '../shared/ui/schemaRegistry';
+
 
 export const ReservaUpsertSchema = z.object({
     id: z.string().uuid().optional(),
@@ -20,3 +22,5 @@ export const ReservaUpsertSchema = z.object({
     isActive: z.boolean().default(true),
 });
 export type ReservaUpsert = z.infer<typeof ReservaUpsertSchema>;
+
+registerSchema('reservas', ReservaUpsertSchema);

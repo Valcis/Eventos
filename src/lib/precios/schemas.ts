@@ -1,4 +1,5 @@
-import { z } from 'zod';
+import {z} from 'zod';
+import {registerSchema} from '../shared/ui/schemaRegistry';
 
 export const PrecioUpsertSchema = z.object({
     id: z.string().uuid().optional(),
@@ -12,3 +13,5 @@ export const PrecioUpsertSchema = z.object({
     isActive: z.boolean().default(true),
 });
 export type PrecioUpsert = z.infer<typeof PrecioUpsertSchema>;
+
+registerSchema('precios', PrecioUpsertSchema);

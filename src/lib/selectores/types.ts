@@ -1,5 +1,5 @@
-import { z } from 'zod';
-
+import {z} from 'zod';
+import {BaseItem} from "../shared/types";
 import {
     ComercialSchema,
     MetodoPagoSchema,
@@ -9,15 +9,6 @@ import {
     ReceptorCobradorSchema,
     PuntoRecogidaSchema,
 } from '../../lib/selectores/schemas';
-
-
-
-export interface BaseItem {
-  id: string;
-  nombre: string;
-  activo: boolean;
-  notas?: string;
-}
 
 
 // Esquema libre para Tipo de consumo (sin restricciones)
@@ -79,15 +70,14 @@ export interface PuntoRecogida extends BaseItem {
 }
 
 export type SelectorKind =
-  | 'comerciales'
-  | 'metodosPago'
-  | 'pagadores'
-  | 'tiendas'
-  | 'unidades'
-  | 'tipoConsumo'
-  | 'receptorCobrador'
-  | 'puntosRecogida';
-
+    | 'comerciales'
+    | 'metodosPago'
+    | 'pagadores'
+    | 'tiendas'
+    | 'unidades'
+    | 'tipoConsumo'
+    | 'receptorCobrador'
+    | 'puntosRecogida';
 
 
 export interface SelectorConfig {
@@ -102,9 +92,9 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Comerciales',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'telefono', label: 'Teléfono', type: 'text', optional: true },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'telefono', label: 'Teléfono', type: 'text', optional: true},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: ComercialSchema,
     },
@@ -112,17 +102,17 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Métodos de pago',
         tableColumns: ['Activo', 'Nombre', 'Requiere receptor'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
             {
                 key: 'requiereReceptor',
                 label: 'Requiere receptor',
                 type: 'select',
                 options: [
-                    { label: 'Sí', value: true },
-                    { label: 'No', value: false },
+                    {label: 'Sí', value: true},
+                    {label: 'No', value: false},
                 ],
             },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: MetodoPagoSchema,
     },
@@ -130,9 +120,9 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Pagadores',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'telefono', label: 'Teléfono', type: 'text', optional: true },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'telefono', label: 'Teléfono', type: 'text', optional: true},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: PagadorSchema,
     },
@@ -140,10 +130,10 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Tiendas',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'direccion', label: 'Dirección', type: 'text', optional: true },
-            { key: 'horario', label: 'Horario', type: 'text', optional: true },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'direccion', label: 'Dirección', type: 'text', optional: true},
+            {key: 'horario', label: 'Horario', type: 'text', optional: true},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: TiendaSchema,
     },
@@ -151,9 +141,9 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Unidades',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'abreviatura', label: 'Abreviatura', type: 'text', optional: true },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'abreviatura', label: 'Abreviatura', type: 'text', optional: true},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: UnidadSchema,
     },
@@ -161,8 +151,8 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Tipo de consumo',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: TipoConsumoFreeSchema, // libre
     },
@@ -170,9 +160,9 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Receptor/Cobrador',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'telefono', label: 'Teléfono', type: 'text', optional: true },
-            { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'telefono', label: 'Teléfono', type: 'text', optional: true},
+            {key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: ReceptorCobradorSchema,
     },
@@ -180,12 +170,12 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         title: 'Puntos de recogida',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
-            { key: 'nombre', label: 'Nombre', type: 'text' },
-            { key: 'direccion', label: 'Dirección', type: 'text', optional: true },
-            { key: 'horario', label: 'Horario', type: 'text', optional: true },
-            { key: 'telefono', label: 'Teléfono', type: 'text', optional: true }, // 👈 nuevo
-            { key: 'capacidad', label: 'Capacidad', type: 'number', optional: true }, // 👈 nuevo
-            { key: 'comentarios', label: 'Notas', type: 'text', optional: true, fullWidth: true },
+            {key: 'nombre', label: 'Nombre', type: 'text'},
+            {key: 'direccion', label: 'Dirección', type: 'text', optional: true},
+            {key: 'horario', label: 'Horario', type: 'text', optional: true},
+            {key: 'telefono', label: 'Teléfono', type: 'text', optional: true}, // 👈 nuevo
+            {key: 'capacidad', label: 'Capacidad', type: 'number', optional: true}, // 👈 nuevo
+            {key: 'comentarios', label: 'Notas', type: 'text', optional: true, fullWidth: true},
         ],
         schema: PuntoRecogidaSchema,
     },
