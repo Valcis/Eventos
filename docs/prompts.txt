@@ -10,7 +10,6 @@ Producto,Unidad, Cantidad, Tipo de precio,	Tipo IVA (%), Base (sin IVA), IVA (�
 Ademas debe haber un boton para añadir nuevo registro/producto, el cual debe mostrar un modal con los campos necesarios para crear un nuevo registro.
 Otro boton para decidir el tipo de vista de la tabla (simple / detallada), siendo simple la vista por defecto. cabeceras para vista simple:
 Producto, Unidad, Cantidad, Total con IVA,¿Pack?,Unidades en pack, Precio por unidad, Pagador, Tienda, Notas, Comprobado. Ademas de un ultimo casillero donde pondre iconos de edicion, borrado y bloqueo (desabilito edicio) de cada fila.
-* Proveedores de momento lo dejamos igual
 * Precios -> tabla con las sig cabeceras : Concepto , importe, Acciones (Edicion, borrado y bloqueo)
 * Balance , este tab ya lo desarrolaremos en profundidad mas adelante porque hace muchos calculos de info que recopila del resto de tabs.
 

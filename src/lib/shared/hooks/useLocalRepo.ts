@@ -7,9 +7,7 @@ export type TableName =
     | 'reservas'
     | 'gastos'
     | 'precios'
-    | 'selectores'
-    // Legacy (si aún existen tablas antiguas en localdb, mantenlas aquí hasta borrarlas físicamente):
-    | 'proveedores';
+    | 'selectores';
 
 export type WithoutBase<T extends BaseEntity> = Omit<T, keyof BaseEntity>;
 

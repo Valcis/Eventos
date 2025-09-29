@@ -14,9 +14,7 @@ import type {
 type TableName =
   | 'eventos'
   | 'reservas'
-  | 'ubicaciones'
   | 'gastos'
-  | 'proveedores'
   | 'precios'
   | 'selectores';
 

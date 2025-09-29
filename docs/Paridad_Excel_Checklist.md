@@ -48,7 +48,7 @@ El archivo Excel funciona como un **mini-ERP** para gestionar **ventas** (pedido
 
 ## 2) App WebEventos — qué hay y qué falta (mapa a alto nivel)
 
-> Nota: tu repo ya incluye páginas por entidad (Asistentes, Reservas, Gastos, Precios, Ubicaciones, Proveedores, Resumen, Balance), componentes base (DataTable modular, Toolbar, Pagination), tablas de columnas y seeds/store local. Los gaps clave están en **schemas por entidad**, **normalización**, **formateo monetario/fecha** y **tests**.
+> Nota: tu repo ya incluye páginas por entidad (Reservas, Gastos, Precios, Resumen, Balance), componentes base (DataTable modular, Toolbar, Pagination), tablas de columnas y seeds/store local. Los gaps clave están en **schemas por entidad**, **normalización**, **formateo monetario/fecha** y **tests**.
 
 ### 2.1 Mapeo Excel → Web
 
@@ -115,8 +115,7 @@ El archivo Excel funciona como un **mini-ERP** para gestionar **ventas** (pedido
 
 ### B. Validators por entidad
 
-- [ ] Dividir `validators/schemas.ts` en archivos por entidad (y re-exportar en `validators/index.ts`):  
-       `validators/pedido.ts`, `validators/gastos.ts`, `validators/asistentes.ts`, `validators/reservas.ts`, `validators/proveedores.ts`, `validators/ubicaciones.ts`, `validators/precios.ts`.
+- [ ] Dividir `validators/schemas.ts` en archivos por entidad.
 
 **Ejemplo — Pedido (reglas Excel):**
 

@@ -41,7 +41,7 @@
 - **Entidades principales**
   - **Reserva**: `{ eventoId, cliente, parrilladas, picarones, tipoConsumo, puntoRecogida?, metodoPago, receptor?, totalPedido, pagado, comprobado, locked, …base }`.
   - **Gasto**: `{ eventoId, producto, unidad, cantidad, tipoPrecio ('bruto'|'neto'), tipoIVA, base, iva, total, isPack, unidadesPack?, precioUnidad?, pagador?, tienda?, notas?, comprobado, locked, …base }`.
-  - **Precio** (unidad): `{ nombre, unidad, precioBase, tipoIVA, precioTotal, proveedor?, notas?, isPack, unidadesPack?, …base }`.
+  - **Precio** (unidad): `{ nombre, unidad, precioBase, tipoIVA, precioTotal, notas?, isPack, unidadesPack?, …base }`.
   - **Selector**: `{ eventoId, categoria ∈ {'tipoConsumo','metodoPago','receptor','puntoRecogida'}, valor, habilitado, orden, …base }`.
 - **Validación**
   - Esquemas **Zod** por entidad (`src/lib/**/validators.ts`). Normalización de inputs (trim, límites) en los esquemas.
