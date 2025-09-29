@@ -6,9 +6,9 @@ import {
     PagadorSchema,
     TiendaSchema,
     UnidadSchema,
-    BenefBizumSchema,
+    ReceptorCobradorSchema,
     PuntoRecogidaSchema,
-} from '../../lib/selectores/validators';
+} from '../../lib/selectores/schemas';
 
 
 
@@ -41,19 +41,42 @@ export interface FieldSpec {
 }
 
 
+export interface ReceptorCobrador extends BaseItem {
+}
 
-export type Comercial = BaseItem & { telefono?: string };
-export type MetodoPago = BaseItem & { requiereReceptor?: boolean }; // Bizum => true
-export type Pagador = BaseItem;
-export type Tienda = BaseItem & { direccion?: string; horario?: string };
-export type Unidad = BaseItem; // kg, und, pack...
-export type TipoConsumo = BaseItem; // "comer_aqui" | "recoger"
-export type BenefBizum = BaseItem; // receptor Bizum
-export type PuntoRecogida = BaseItem & {
-  direccion?: string;
-  horario?: string;
-  comentarios?: string;
-};
+export interface MetodoPago extends BaseItem {
+    requiereReceptor?: boolean;
+}
+
+export interface ReceptorCobrador extends BaseItem {
+}
+
+export interface TipoConsumo extends BaseItem {
+}
+
+export interface Comercial extends BaseItem {
+    telefonos?: string;
+}
+
+
+export interface Tienda extends BaseItem {
+    direccion?: string;
+    horario?: string;
+}
+
+
+export interface Pagador extends BaseItem {
+}
+
+
+export interface Unidad extends BaseItem {
+}
+
+
+export interface PuntoRecogida extends BaseItem {
+    direccion?: string;
+    horario?: string;
+}
 
 export type SelectorKind =
   | 'comerciales'
@@ -62,7 +85,7 @@ export type SelectorKind =
   | 'tiendas'
   | 'unidades'
   | 'tipoConsumo'
-  | 'benefBizum'
+  | 'receptorCobrador'
   | 'puntosRecogida';
 
 
@@ -143,7 +166,7 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
         ],
         schema: TipoConsumoFreeSchema, // libre
     },
-    benefBizum: {
+    receptorCobrador: {
         title: 'Receptor/Cobrador',
         tableColumns: ['Activo', 'Nombre'],
         fields: [
@@ -151,7 +174,7 @@ export const SELECTOR_CONFIG: Record<SelectorKind, SelectorConfig> = {
             { key: 'telefono', label: 'Teléfono', type: 'text', optional: true },
             { key: 'notas', label: 'Notas', type: 'text', optional: true, fullWidth: true },
         ],
-        schema: BenefBizumSchema,
+        schema: ReceptorCobradorSchema,
     },
     puntosRecogida: {
         title: 'Puntos de recogida',

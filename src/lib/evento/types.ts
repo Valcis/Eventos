@@ -1,8 +1,9 @@
-import {BaseEntity, ID} from "../shared/types";
+import { BaseEntity } from '../shared/types';
 
 export interface Evento extends BaseEntity {
-    nombre: string;
-    fecha: string;
-    ubicacionId?: ID;
-    presupuesto: number;
+    nombre: string;          // req, ≤100
+    fecha: string;           // req (ISO-like string)
+    direccion?: string;      // ≤150
+    presupuesto?: number;
+    aforoMaximo?: number;
 }

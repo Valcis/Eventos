@@ -1,8 +1,13 @@
-export type ID = string;
-
 export interface BaseEntity {
-  id: ID;
-  createdAt: string;
-  updatedAt: string;
-  isActive: boolean;
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    isActive: boolean;
+}
+
+export interface BaseItem {
+    id: string;
+    nombre: string;
+    isActive: boolean;
+    notas?: string;
 }

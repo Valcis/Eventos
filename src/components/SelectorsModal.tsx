@@ -21,14 +21,7 @@ interface Props {
 }
 
 export default function SelectorsModal({
-                                           title,
-                                           kind,
-                                           eventId,
-                                           isOpen,
-                                           isReadOnly,
-                                           initial,
-                                           onClose,
-                                           onSaved,
+                                           title, kind, eventId, isOpen, isReadOnly, initial, onClose, onSaved,
                                        }: Props): JSX.Element {
     const cfg = SELECTOR_CONFIG[kind];
     const schema: z.ZodType<unknown> = cfg.schema;

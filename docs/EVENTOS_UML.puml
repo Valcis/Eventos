@@ -1,0 +1,80 @@
+@startuml
+title EVENTOS — UML (estado actual del código)
+
+class BaseEntity <<abstract>> {
+  +id: string
+  +createdAt: string
+  +updatedAt: string
+  +isActive: boolean
+}
+
+class Evento {
+  +nombre: string
+  +fecha: string
+  +ubicacionId: string?
+  +presupuesto: number
+}
+
+class Gasto {
+  +eventoId: string
+  +producto: string
+  +unidad: string
+  +cantidad: number
+  +tipoPrecio: "bruto|neto"
+  +tipoIVA: number
+  +base: number
+  +iva: number
+  +total: number
+  +isPack: boolean
+  +unidadesPack: number?
+  +precioUnidad: number?
+  +pagador: string?
+  +tienda: string?
+  +notas: string?
+  +comprobado: boolean
+  +locked: boolean
+}
+
+class Precio {
+  +eventoId: string
+  +concepto: string
+  +importe: number
+  +locked: boolean?
+}
+
+class Reserva {
+  +eventoId: string
+  +cliente: string
+  +parrilladas: number
+  +picarones: number
+  +tipoConsumo: "local|llevar|delivery"  ' (validator acepta variantes)
+  +metodoPago: string
+  +receptor: string?
+  +totalPedido: number
+  +pagado: boolean
+  +comprobado: boolean
+  +locked: boolean
+  +puntoRecogidaId: string?
+}
+
+class PuntoRecogida {
+  +id: string
+  +nombre: string
+  +activo: boolean
+  +direccion: string?
+  +horario: string?
+  +comentarios: string?
+  +notas: string?
+}
+
+BaseEntity <|-- Evento
+BaseEntity <|-- Gasto
+BaseEntity <|-- Precio
+BaseEntity <|-- Reserva
+
+Evento "1" o-- "0..*" Gasto : eventoId
+Evento "1" o-- "0..*" Precio : eventoId
+Evento "1" o-- "0..*" Reserva : eventoId
+Reserva "0..*" o-- "0..1" PuntoRecogida : puntoRecogidaId
+
+@enduml

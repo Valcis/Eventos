@@ -1,6 +1,3 @@
-// src/lib/reservas/presets.ts
-// Preset SOLO de Reservas, usando tipos locales.
-
 import type {Reserva} from './types';
 import type {ColumnDef} from '../../components/ui/DataTable/types';
 import type {FilterField} from '../../components/ui/FilterBar/types';

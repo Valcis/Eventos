@@ -1,0 +1,120 @@
+@startuml
+title EVENTOS — UML (modelo objetivo con selectores relacionados)
+
+' ========= Base =========
+class BaseEntity <<abstract>> {
+  +id: string
+  +createdAt: string
+  +updatedAt: string
+  +isActive: boolean
+}
+
+class BaseItem <<abstract>> {
+  +id: string
+  +nombre: string
+  +activo: boolean
+  +notas: string?
+}
+
+' ========= Core =========
+class Evento {
+  +nombre: string        <<required, <=100>>
+  +fecha: string         <<required, ISO-like>>
+  +direccion: string?    <<<=150>>
+  +presupuesto: number?
+  +aforoMaximo: number?
+}
+
+class Reserva {
+  +eventoId: string
+  +cliente: string
+  +parrilladas: number
+  +picarones: number
+  +metodoPagoId: string
+  +receptorId: string
+  +tipoConsumoId: string
+  +comercialId: string
+  +totalPedido: number
+  +pagado: boolean
+  +comprobado: boolean
+  +locked: boolean
+  +puntoRecogidaId: string?
+}
+
+class Gasto {
+  +eventoId: string
+  +producto: string
+  +unidadId: string
+  +cantidad: number
+  +tipoPrecio: "con IVA" | "sin IVA"
+  +tipoIVA: number
+  +precioBase: number
+  +precioNeto: number
+  +isPack: boolean
+  +unidadesPack: number?
+  +precioUnidad: number?
+  +pagadorId: string?
+  +tiendaId: string?
+  +notas: string?
+  +comprobado: boolean
+  +locked: boolean
+}
+
+class Precio {
+  +eventoId: string
+  +concepto: string
+  +importe: number
+  +moneda: string
+  +locked: boolean?
+}
+
+' ========= Selectores =========
+class MetodoPago {
+  +requiereReceptor: boolean?
+}
+class ReceptorCobrador
+class TipoConsumo
+class Comercial
+class Tienda {
+  +direccion: string?
+  +horario: string?
+}
+class Pagador
+class Unidad
+class PuntoRecogida {
+  +direccion: string?
+  +horario: string?
+  +comentarios: string?
+}
+
+' Inheritances
+BaseEntity <|-- Evento
+BaseEntity <|-- Reserva
+BaseEntity <|-- Gasto
+BaseEntity <|-- Precio
+
+BaseItem <|-- MetodoPago
+BaseItem <|-- ReceptorCobrador
+BaseItem <|-- TipoConsumo
+BaseItem <|-- Comercial
+BaseItem <|-- Tienda
+BaseItem <|-- Pagador
+BaseItem <|-- Unidad
+BaseItem <|-- PuntoRecogida
+
+' ========= Relaciones =========
+Evento "1" o-- "0..*" Reserva : eventoId
+Evento "1" o-- "0..*" Gasto   : eventoId
+Evento "1" o-- "0..*" Precio  : eventoId
+
+Reserva "0..*" o-- "1" MetodoPago       : metodoPagoId
+Reserva "0..*" o-- "1" ReceptorCobrador : receptorId
+Reserva "0..*" o-- "1" TipoConsumo      : tipoConsumoId
+Reserva "0..*" o-- "1" Comercial        : comercialId
+Reserva "0..*" o-- "0..1" PuntoRecogida : puntoRecogidaId
+
+Gasto "0..*" o-- "1" Unidad  : unidadId
+Gasto "0..*" o-- "0..1" Tienda  : tiendaId
+Gasto "0..*" o-- "0..1" Pagador : pagadorId
+
+@enduml

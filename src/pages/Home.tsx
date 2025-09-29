@@ -4,7 +4,7 @@ import Modal from '../components/Modal';
 import FormField from '../components/FormField';
 import type {Evento} from '../lib/evento/types';
 import {useCrud} from "../lib/shared/hooks/useLocalRepo";
-import {eventoSchema} from "../lib/evento/validators";
+import {EventoUpsertSchema} from "../lib/evento/schemas";
 
 export default function Home() {
     const {items, create} = useCrud<Evento>('eventos');
@@ -16,7 +16,7 @@ export default function Home() {
     function onSubmit(ev: React.FormEvent<HTMLFormElement>) {
         ev.preventDefault();
         const raw = Object.fromEntries(new FormData(ev.currentTarget).entries());
-        const parsed = eventoSchema.safeParse(raw);
+        const parsed = EventoUpsertSchema.safeParse(raw);
         if (!parsed.success) {
             alert('Revisa los campos');
             return;
@@ -43,7 +43,7 @@ export default function Home() {
                         <div className="text-sm text-gray-500">{ev.fecha}</div>
                         <div className="text-lg font-semibold">{ev.nombre}</div>
                         <div className="text-xs text-gray-500">
-                            {ev.ubicacionId ? `Ubicación: ${ev.ubicacionId}` : 'Sin ubicación'}
+                            {ev.direccion ? `Ubicación: ${ev.direccion}` : 'Sin ubicación'}
                         </div>
                     </Link>
                 ))}
