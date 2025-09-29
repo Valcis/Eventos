@@ -1,5 +1,5 @@
 import { seed } from './store/localdb';
-import type { Precio, Selector, Ubicacion, Reserva, Evento } from './types';
+import type { Precio, Selector, Ubicacion, Reserva, Evento } from './lib/shared/types';
 
 const now = (d: string) => d;
 

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import type { SelectorKind } from '../../types/selectores';
+import type { SelectorKind } from '../../lib/selectores/types';
 import { SELECTOR_CONFIG } from '../../features/selectors/config';
 import SelectorsCard from '../../features/selectors/SelectorsCard';
 

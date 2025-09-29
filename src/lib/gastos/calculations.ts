@@ -1,4 +1,4 @@
-import type { Gasto } from '../../types';
+import type { Gasto } from '../shared/types';
 
 export function calcularGasto(g: Pick<Gasto, 'tipoPrecio' | 'tipoIVA' | 'base' | 'total'>): {
   base: number;

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import Modal from '../../components/Modal';
 import FormField from '../../components/FormField';
-import type { SelectorKind, BaseItem } from '../../types/selectores';
+import type { SelectorKind, BaseItem } from '../../lib/selectores/types';
 import { SELECTOR_CONFIG, type FieldSpec } from './config';
 import { z } from 'zod';
 import { upsertSelector } from '../../store/localdb';

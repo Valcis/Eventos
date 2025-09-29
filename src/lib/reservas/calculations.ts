@@ -1,4 +1,4 @@
-import type { Precio, Reserva } from '../../types';
+import type { Precio, Reserva } from '../shared/types';
 
 export function calcularTotalPedido(
   reserva: Pick<Reserva, 'parrilladas' | 'picarones'>,

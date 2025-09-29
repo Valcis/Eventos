@@ -2,7 +2,7 @@ import { JSX } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Info, Pencil, Trash2, Eye, Settings } from 'lucide-react';
 import { useAlertConfirm } from '../../components/ui/AlertConfirm';
-import type { SelectorKind } from '../../types/selectores';
+import type { SelectorKind } from '../../lib/selectores/types';
 import { SELECTOR_CONFIG } from './config';
 import IconButton from '../../components/ui/IconButton';
 import MiniTable from '../../components/ui/MiniTable';

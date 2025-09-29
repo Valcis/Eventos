@@ -1,6 +1,6 @@
 import { useParams } from 'react-router-dom';
-import { useCrud } from '../../lib/crud';
-import type { Gasto, Precio, Asistente } from '../../types';
+import { useCrud } from '../../lib/shared/utils/crud';
+import type { Gasto, Precio, Asistente } from '../../lib/shared/types';
 
 export default function Balance() {
   const { id } = useParams<{ id: string }>();

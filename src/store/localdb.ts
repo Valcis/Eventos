@@ -1,4 +1,4 @@
-import type { BaseEntity } from '../types';
+import type { BaseEntity } from '../lib/shared/types';
 import type {
   SelectorKind,
   BaseItem,
@@ -9,7 +9,7 @@ import type {
   TipoConsumo,
   BenefBizum,
   PuntoRecogida,
-} from '../types/selectores';
+} from '../lib/selectores/types';
 
 type TableName =
   | 'eventos'

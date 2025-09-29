@@ -1,7 +1,7 @@
 // src/lib/calculations/resumen.ts
-import type { Gasto, Reserva, Ubicacion } from '../../types';
-import { gastoAcumulado } from './gastos';
-import { reservasConfirmadas } from './reservas';
+import type { Gasto, Reserva, Ubicacion } from '../shared/types';
+import { gastoAcumulado } from '../gastos/calculations';
+import { reservasConfirmadas } from '../reservas/calculations';
 
 export interface ResumenResult {
   gastoAcumulado: number;

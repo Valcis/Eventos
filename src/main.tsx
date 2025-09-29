@@ -9,7 +9,6 @@ import Home from './pages/Home';
 import Reservas from './pages/evento/Reservas';
 import Selectores from './pages/evento/Selectores';
 import Resumen from './pages/evento/Resumen';
-import Ubicaciones from './pages/evento/Ubicaciones';
 import Precios from './pages/evento/Precios';
 import Gastos from './pages/evento/Gastos';
 
@@ -25,7 +24,6 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Resumen /> },
           { path: 'reservas', element: <Reservas /> },
-          { path: 'ubicaciones', element: <Ubicaciones /> },
           { path: 'precios', element: <Precios /> },
           { path: 'gastos', element: <Gastos /> },
           { path: 'selectores', element: <Selectores /> },

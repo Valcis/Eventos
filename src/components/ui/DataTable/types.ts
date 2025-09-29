@@ -1,85 +1,71 @@
-import {ReactNode} from 'react';
+import { ReactNode } from 'react';
 
 export type Align = 'left' | 'center' | 'right';
+export type Density = 'compact' | 'normal';
+export type DensityMode = 'detailed' | 'simple';
 
 export interface SortState {
     columnId: string | null;
     direction: 'asc' | 'desc' | null;
 }
 
-/** Util para callbacks bivariantes (como hacen los handlers de React) */
-type BivariantCallback<T extends (...args: any[]) => any> = {
-    bivarianceHack: T;
-}['bivarianceHack'];
+type Bivariant<T> = { bivarianceHack: T }['bivarianceHack'];
 
-/**
- * Definición de columna genérica:
- * - Row: tipo de fila
- * - CellValue: tipo de valor que devuelve el accessor de esta columna
- */
-export interface ColumnDef<Row, CellValue = unknown> {
-    /** Identificador único de columna (se recomienda string estable) */
+export interface ColumnDef<Row = unknown, CellValue = unknown> {
     id?: keyof Row | string;
-
-    /** Cabecera (texto o nodo) */
     header: ReactNode;
-
-    /**
-     * Función para obtener el valor de celda desde la fila.
-     * Si se define, el tipo de `CellValue` será el de la celda y se propagará a `cell`.
-     */
     accessor?: (row: Row) => CellValue;
-
-    /**
-     * Clave de acceso directa (opcional, útil cuando Row es un objeto plano).
-     * Si se usa, `CellValue` se infiere como `unknown` en esta interfaz y
-     * deberá especificarse en la página si se quiere tipado fuerte.
-     */
-
-
     accessorKey?: string;
-
-    /**
-     * Bivariante: permite que `cell` acepte un subtipo/supertipo sin romper asignabilidad
-     * Render de la celda con tipos fuertes:
-     * - `value` es del tipo `CellValue` que devuelve `accessor`.
-     * - `row` es la fila completa (tipo `Row`).
-     */
-
-    cell?: BivariantCallback<(value: CellValue, row: Row) => ReactNode>;
-
-
-    /** Ordenable en UI (client-side) */
+    cell?: Bivariant<(value: CellValue, row: Row) => ReactNode>;
     isSortable?: boolean;
-
-    /**
-     * Comparador opcional específico de la columna.
-     * Si no se proporciona, se usa un comparador genérico por tipo.
-     */
     sortFn?: (leftRow: Row, rightRow: Row, direction: 'asc' | 'desc') => number;
-
-    /** Presentación */
     width?: number | string;
     align?: Align;
+
+    /** Vista simple: mostrar solo estas + acciones */
+    isSimpleKey?: boolean;
+
+    /** Señaliza columna de acciones */
+    role?: 'actions';
 }
 
-export interface DataTableProps<Row> {
+export interface DataTableProps<Row = unknown> {
     rows: Row[];
-    columns: Array<ColumnDef<Row, unknown>>;
+    columns: ColumnDef<Row, unknown>[];
+
+    /** Header */
+    showDensityToggle?: boolean;                    // si true, renderiza botón centro (detailed/simple)
+    onCreate?: () => void;                          // botón derecha
+
+    /** Ordenación */
     sort?: SortState;
     onSortChange?: (next: SortState) => void;
-    emptyState?: ReactNode;
-    className?: string;
-    hideHeader?: boolean;
-    /** Compat: placeholder del filtro si se renderiza fuera */
-    globalFilterPlaceholder?: string;
-    /** Filtro global controlado (opcional) */
+
+    /** Densidad visual de filas */
+    density?: Density;
+    isDense?: boolean; // compat
+
+    /** Vista de columnas (simple/detallada). Si no se pasa, no se usa. */
+    densityMode?: DensityMode;
+
+    /** Filtro global (si lo usas fuera) */
     globalFilterValue?: string;
     onGlobalFilterChange?: (value: string) => void;
-    /** Densidad visual */
-    density?: 'compact' | 'normal';
-    /** Boolean convenience for density: true => compact, false => normal */
-    isDense?: boolean;
-    /** Optional actions column renderer; when provided, a final column is shown */
+
+    /** Apariencia */
+    className?: string;
+    emptyState?: ReactNode;
+
+    /** Paginación (si pasas onPageChange, se pagina client-side con rows) */
+    page?: number;          // 1-based
+    pageSize?: number;
+    total?: number;         // si no se pasa, se usa rows.length
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (size: number) => void;
+
+    /** Acciones por fila */
     renderActions?: (row: Row) => ReactNode;
+
+    /** Ocultar cabecera de columnas */
+    hideHeader?: boolean;
 }

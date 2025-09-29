@@ -1,66 +1,73 @@
 import React, {ReactNode, useMemo} from 'react';
 import type {DataTableProps, ColumnDef, SortState} from './types';
+import Pagination from './Pagination';
 
-function DataTable<Row>({
-                            rows,
-                            columns,
-                            sort = {columnId: null, direction: null},
-                            onSortChange,
-                            emptyState,
-                            className,
-                            hideHeader = false,
-                            globalFilterValue,
-                            onGlobalFilterChange, // reservado para uso externo
-                            density = 'compact',
-                            isDense,
-                            renderActions,
-                        }: DataTableProps<Row>): JSX.Element {
+type Row = Record<string, unknown>;
+
+function DataTable({
+                       rows,
+                       columns,
+                       showDensityToggle = false,
+                       onCreate,
+
+                       sort = {columnId: null, direction: null},
+                       onSortChange,
+
+                       density = 'compact',
+                       isDense,
+
+                       densityMode, // 'detailed' | 'simple' | undefined
+
+                       globalFilterValue,
+                       onGlobalFilterChange,
+
+                       className,
+                       emptyState,
+
+                       page = 1,
+                       pageSize = 10,
+                       total,
+                       onPageChange,
+                       onPageSizeChange,
+
+                       renderActions,
+                       hideHeader = false,
+                   }: DataTableProps<Row>): JSX.Element {
     const safeRows: Row[] = rows ?? [];
-    const safeColumns: Array<ColumnDef<Row, unknown>> = (columns ?? []).map((column, index) => {
+
+    // Normaliza columnas + añade columna "acciones" si hace falta
+    const safeColumns: ColumnDef[] = (columns ?? []).map((column, index) => {
         const columnId =
-            column.id ??
+            (column.id as string | undefined) ??
             (typeof column.accessorKey === 'string' ? column.accessorKey : undefined) ??
             `col_${index}`;
         return {...column, id: columnId};
     });
+    const actionsCol: ColumnDef | undefined = renderActions ? {
+        id: '__actions__',
+        header: 'Acciones',
+        role: 'actions' as const
+    } : undefined;
 
-    function toggleSort(columnId: string, isSortable?: boolean): void {
-        if (!isSortable) return;
-        const isSame = sort.columnId === columnId;
-        const next: SortState['direction'] =
-            !isSame ? 'asc' : sort.direction === 'asc' ? 'desc' : sort.direction === 'desc' ? null : 'asc';
-        onSortChange?.({columnId: next ? columnId : null, direction: next});
-    }
-
-    function getCellValue(column: ColumnDef<Row, unknown>, row: Row): unknown {
-        if (column.accessor) return column.accessor(row);
-        if (column.accessorKey) return (row as unknown as Record<string, unknown>)[column.accessorKey];
-        if (typeof column.id === 'string') return (row as unknown as Record<string, unknown>)[column.id];
-        return undefined;
-    }
-
-    function renderCell(column: ColumnDef<Row, unknown>, row: Row): ReactNode {
-        const value = getCellValue(column, row);
-        if (column.cell) {
-            // bivariante: podemos pasar unknown sin romper tipos
-            return (column.cell as (v: unknown, r: Row) => ReactNode)(value, row);
-        }
-        return value as ReactNode;
-    }
-
+    // Filtrado global (compat)
     const filteredRows: Row[] = useMemo(() => {
         if (!globalFilterValue) return safeRows;
-        const query = globalFilterValue.toLowerCase().trim();
-        return safeRows.filter((row) => JSON.stringify(row).toLowerCase().includes(query));
+        const q = globalFilterValue.toLowerCase().trim();
+        return safeRows.filter((r) => JSON.stringify(r).toLowerCase().includes(q));
     }, [safeRows, globalFilterValue]);
+
+    // Ordenación (compat)
+    function getCellValue(column: ColumnDef, row: Row): unknown {
+        if (column.accessor) return column.accessor(row as never);
+        if (column.accessorKey) return (row as Record<string, unknown>)[column.accessorKey];
+        if (typeof column.id === 'string') return (row as Record<string, unknown>)[column.id];
+        return undefined;
+    }
 
     const sortedRows: Row[] = useMemo(() => {
         const {columnId, direction} = sort;
         if (!columnId || !direction) return filteredRows;
-
-        const column = safeColumns.find((c) => String(c.id) === String(columnId)) as
-            | ColumnDef<Row, unknown>
-            | undefined;
+        const column = safeColumns.find((c) => String(c.id) === String(columnId)) as ColumnDef | undefined;
         if (!column) return filteredRows;
 
         const compare: (a: Row, b: Row) => number = column.sortFn
@@ -68,7 +75,6 @@ function DataTable<Row>({
             : (a, b) => {
                 const left = getCellValue(column, a);
                 const right = getCellValue(column, b);
-
                 if (left == null && right == null) return 0;
                 if (left == null) return direction === 'asc' ? -1 : 1;
                 if (right == null) return direction === 'asc' ? 1 : -1;
@@ -79,95 +85,158 @@ function DataTable<Row>({
                 if (typeof left === 'boolean' && typeof right === 'boolean') {
                     return direction === 'asc' ? Number(left) - Number(right) : Number(right) - Number(left);
                 }
-                const leftStr = String(left);
-                const rightStr = String(right);
-                return direction === 'asc' ? leftStr.localeCompare(rightStr) : rightStr.localeCompare(leftStr);
+                const l = String(left);
+                const r = String(right);
+                return direction === 'asc' ? l.localeCompare(r) : r.localeCompare(l);
             };
-
         return [...filteredRows].sort(compare);
     }, [filteredRows, safeColumns, sort]);
 
+    // Columnas visibles por densityMode
+    const visibleColumns: ColumnDef[] = useMemo(() => {
+        const base = densityMode === 'simple'
+            ? safeColumns.filter((c) => c.isSimpleKey === true)
+            : safeColumns;
+        return actionsCol ? [...base, actionsCol] : base;
+    }, [safeColumns, actionsCol, densityMode]);
+
+    // Densidad de filas (visual)
     const effectiveDensity = typeof isDense === 'boolean' ? (isDense ? 'compact' : 'normal') : density;
     const headPaddingY = effectiveDensity === 'compact' ? 'py-1' : 'py-2';
     const cellPaddingY = effectiveDensity === 'compact' ? 'py-1' : 'py-2.5';
 
+    // Paginación (client-side por defecto)
+    const totalItems = typeof total === 'number' ? total : sortedRows.length;
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const pageRows = onPageChange ? sortedRows.slice(start, end) : sortedRows;
+
+    // REGLA NUEVA: el paginador se monta SIEMPRE pero se oculta si <= 5 filas.
+    const hidePaginator = totalItems <= 5;
+
+    // Header: "{n} elementos encontrados" | toggle centro | crear derecha
     return (
-        <div className={className}>
-            <div className="overflow-auto rounded-xl border border-zinc-200">
-                <table className="min-w-full text-sm">
-                    {!hideHeader && (
-                        <thead className="bg-zinc-50">
+        <div className={`relative overflow-hidden rounded-2xl bg-white shadow-sm ${className ?? ''}`}>
+            <div className="flex items-center justify-between border-b border-zinc-200 px-3 py-2">
+                <div className="text-sm font-medium text-zinc-700">
+                    {totalItems} elementos encontrados
+                </div>
+
+                <div className="flex items-center justify-center">
+                    {showDensityToggle && typeof densityMode !== 'undefined' && (
+                        <button
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => {
+                                // el padre controla densityMode; aquí solo disparamos el cambio (si el padre la gestiona)
+                                // (se deja decisión al padre; este botón es puramente de UI central)
+                                // Si prefieres control interno, muévelo al padre (página) como hasta ahora.
+                                const next = densityMode === 'detailed' ? 'simple' : 'detailed';
+                                // No tenemos handler aquí por diseño del tipo; el toggling se hace en la página.
+                                // Si quieres que DataTable lo gestione: agrega onDensityModeChange al DataTableProps.
+                                console.warn('Toggle de vista pulsado: implementa en la página el cambio de densityMode ->', next);
+                            }}
+                            aria-label="Cambiar vista (detallada/simple)"
+                            title="Cambiar vista (detallada/simple)"
+                        >
+                            {densityMode === 'detailed' ? 'Vista: Detallada' : 'Vista: Simple'}
+                        </button>
+                    )}
+                </div>
+
+                <div>
+                    {onCreate && (
+                        <button className="btn" onClick={onCreate} aria-label="Crear">Crear</button>
+                    )}
+                </div>
+            </div>
+
+            {/* Tabla */}
+            {!hideHeader && (
+                <div className="overflow-auto">
+                    <table className="min-w-full">
+                        <thead>
                         <tr>
-                            {safeColumns.map((column) => (
-                                <th
-                                    key={String(column.id)}
-                                    className={`text-left ${headPaddingY} px-3 font-medium text-zinc-700 select-none`}
-                                    style={{width: column.width}}
-                                    onClick={() => toggleSort(String(column.id), column.isSortable)}
-                                >
-                                    <div
-                                        className={`inline-flex items-center gap-1 ${
-                                            (column.align ?? 'left') === 'right'
-                                                ? 'justify-end w-full'
-                                                : (column.align ?? 'left') === 'center'
-                                                    ? 'justify-center w-full'
-                                                    : ''
-                                        }`}
-                                        role={column.isSortable ? 'button' : undefined}
+                            {visibleColumns.map((column) => {
+                                const isSorted = sort.columnId === column.id && sort.direction;
+                                const ariaSort = isSorted ? (sort.direction === 'asc' ? 'ascending' : 'descending') : 'none';
+                                return (
+                                    <th
+                                        key={String(column.id)}
+                                        className={`text-left text-sm font-semibold text-zinc-700 ${headPaddingY} px-3 select-none`}
+                                        style={{width: column.width}}
+                                        onClick={() => {
+                                            if (!column.isSortable) return;
+                                            const isSame = sort.columnId === column.id;
+                                            const next: SortState['direction'] = !isSame
+                                                ? 'asc'
+                                                : sort.direction === 'asc'
+                                                    ? 'desc'
+                                                    : sort.direction === 'desc'
+                                                        ? null
+                                                        : 'asc';
+                                            onSortChange?.({
+                                                columnId: next ? String(column.id) : null,
+                                                direction: next
+                                            });
+                                        }}
+                                        role="columnheader"
+                                        aria-sort={ariaSort as React.AriaAttributes['aria-sort']}
                                     >
-                                        {column.header}
-                                        {sort.columnId === column.id && sort.direction && (
-                                            <span aria-hidden>{sort.direction === 'asc' ? '▲' : '▼'}</span>
-                                        )}
-                                    </div>
-                                </th>
-                            ))}
-                            {renderActions && (
-                                <th className={`text-right ${headPaddingY} px-3 font-medium text-zinc-700 select-none`} style={{width: 120}}>
-                                    Acciones
-                                </th>
-                            )}
+                                        <div className="flex items-center gap-1">
+                                            {column.header}
+                                            {isSorted && sort.direction && (
+                                                <span aria-hidden>{sort.direction === 'asc' ? '▲' : '▼'}</span>
+                                            )}
+                                        </div>
+                                    </th>
+                                );
+                            })}
                         </tr>
                         </thead>
-                    )}
-                    <tbody>
-                    {sortedRows.length === 0 ? (
-                        <tr>
-                            <td className="px-3 py-6 text-center text-zinc-500" colSpan={safeColumns.length}>
-                                {emptyState ?? 'Sin datos'}
-                            </td>
-                        </tr>
-                    ) : (
-                        sortedRows.map((row, rowIndex) => (
-                            <tr
-                                key={(row as unknown as { id?: string })?.id ?? rowIndex}
-                                className="border-t border-zinc-100"
-                            >
-                                {safeColumns.map((column, columnIndex) => (
+                    </table>
+                </div>
+            )}
+
+            <div className="overflow-auto">
+                {pageRows.length === 0 ? (
+                    <div className="p-6 text-center text-zinc-500">{emptyState ?? 'Sin datos'}</div>
+                ) : (
+                    <table className="min-w-full">
+                        <tbody>
+                        {pageRows.map((row, rowIndex) => (
+                            <tr key={rowIndex} className="border-b border-zinc-100">
+                                {visibleColumns.map((column, columnIndex) => (
                                     <td
-                                        key={`${String(column.id)}_${rowIndex}_${columnIndex}`}
-                                        className={`${cellPaddingY} px-3 text-zinc-800 ${
-                                            (column.align ?? 'left') === 'right'
-                                                ? 'text-right'
-                                                : (column.align ?? 'left') === 'center'
-                                                    ? 'text-center'
-                                                    : 'text-left'
-                                        }`}
-                                        style={{width: column.width}}
+                                        key={`${String(column.id)}_${columnIndex}`}
+                                        className={`px-3 ${cellPaddingY} text-sm`}
+                                        style={{width: column.width, textAlign: column.align ?? 'left'}}
                                     >
-                                        {renderCell(column as ColumnDef<Row, unknown>, row)}
+                                        {column.role === 'actions'
+                                            ? (renderActions ? renderActions(row) : null)
+                                            : (() => {
+                                                const val = getCellValue(column as ColumnDef, row);
+                                                return column.cell ? (column.cell as (v: unknown, r: Row) => ReactNode)(val, row) : (val as ReactNode);
+                                            })()}
                                     </td>
                                 ))}
-                                {renderActions && (
-                                    <td className={`${cellPaddingY} px-3 text-right`}>
-                                        {renderActions(row)}
-                                    </td>
-                                )}
                             </tr>
-                        ))
-                    )}
-                    </tbody>
-                </table>
+                        ))}
+                        </tbody>
+                    </table>
+                )}
+            </div>
+
+            {/* Paginación SIEMPRE montada; oculta si <= 5 filas */}
+            <div className={hidePaginator ? 'hidden' : 'block border-t border-zinc-200'}>
+                <Pagination
+                    page={page}
+                    pageSize={pageSize}
+                    total={totalItems}
+                    onPageChange={onPageChange ?? (() => {
+                    })}
+                    onPageSizeChange={onPageSizeChange}
+                    isCompact={effectiveDensity === 'compact'}
+                />
             </div>
         </div>
     );

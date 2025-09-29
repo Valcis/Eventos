@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { SelectorKind } from '../../types/selectores';
+import type { SelectorKind } from '../../lib/selectores/types';
 import {
   ComercialSchema,
   MetodoPagoSchema,
@@ -8,7 +8,7 @@ import {
   UnidadSchema,
   BenefBizumSchema,
   PuntoRecogidaSchema,
-} from '../../lib/validators/selectores';
+} from '../../lib/selectores/validators';
 
 // Esquema libre para Tipo de consumo (sin restricciones)
 const TipoConsumoFreeSchema = z.object({

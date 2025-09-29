@@ -1,6 +1,6 @@
 import {useState} from 'react';
 import {z} from 'zod';
-import * as db from '../store/localdb';
+import * as db from '../../../store/localdb';
 import type {BaseEntity} from '../types';
 
 type TableName =

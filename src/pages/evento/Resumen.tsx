@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { useCrud } from '../../lib/crud';
-import type { Gasto, Reserva, Ubicacion } from '../../types';
-import { calcularResumen } from '../../lib/calculations/resumen';
+import { useCrud } from '../../lib/shared/utils/crud';
+import type { Gasto, Reserva, Ubicacion } from '../../lib/shared/types';
+import { calcularResumen } from '../../lib/resumen/calculations';
 
 export default function Resumen() {
   const { id: eventoId } = useParams<{ id: string }>();

@@ -2,8 +2,8 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Modal from '../components/Modal';
 import FormField from '../components/FormField';
-import { useCrud, schemas } from '../lib/crud';
-import type { Evento } from '../types';
+import { useCrud, schemas } from '../lib/shared/utils/crud';
+import type { Evento } from '../lib/shared/types';
 
 export default function Home() {
   const { items, create } = useCrud<Evento>('eventos');
