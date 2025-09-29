@@ -1,8 +1,15 @@
-import {BaseEntity, ID} from "../shared/types";
+export type ID = string;
+export type ISODateTime = string;
 
+export interface BaseEntity {
+    id: ID;
+    createdAt: ISODateTime;
+    updatedAt: ISODateTime;
+    isActive: boolean;
+}
 
-export type TipoConsumo = 'comer_aqui' | 'para_llevar' | 'domicilio';
-export type MetodoPago = 'efectivo' | 'tarjeta' | 'bizum';
+export type MetodoPago = 'efectivo' | 'tarjeta' | 'bizum' | 'transferencia';
+export type TipoConsumo = 'local' | 'llevar' | 'delivery';
 
 export interface Reserva extends BaseEntity {
     eventoId: ID;
@@ -10,11 +17,18 @@ export interface Reserva extends BaseEntity {
     parrilladas: number;
     picarones: number;
     tipoConsumo: TipoConsumo;
-    puntoRecogidaId?: ID;
     metodoPago: MetodoPago;
     receptor?: string;
     totalPedido: number;
     pagado: boolean;
     comprobado: boolean;
     locked: boolean;
+}
+
+export interface ReservaFilters {
+    q?: string;
+    metodoPago?: MetodoPago;
+    pagado?: boolean;
+    comprobado?: boolean;
+    locked?: boolean;
 }

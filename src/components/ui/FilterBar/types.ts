@@ -1,8 +1,16 @@
-export type Primitive = string | number | boolean | null | undefined | Date;
+// src/components/ui/FilterBar/types.ts
+export type Primitive = string | number | boolean | '' | null | undefined | Date;
 
 export type FilterOperator =
-    | 'contains' | 'equals' | 'startsWith' | 'endsWith'
-    | 'gt' | 'gte' | 'lt' | 'lte' | 'in';
+    | 'contains'
+    | 'equals'
+    | 'startsWith'
+    | 'endsWith'
+    | 'gt'
+    | 'gte'
+    | 'lt'
+    | 'lte'
+    | 'in';
 
 export type FilterFieldType = 'text' | 'number' | 'select' | 'date' | 'boolean';
 
@@ -12,15 +20,18 @@ export interface SelectOption {
 }
 
 export interface FilterField<T = unknown> {
-    /** Key de la columna o campo semántico del recurso */
+    /** Column id or key in the row. */
     id: keyof T | string;
     label: string;
     type: FilterFieldType;
-    /** Predicado custom (opcional) si filtras client-side */
+
+    /** Custom predicate overrides default behavior for type+operator. */
     predicate?: (row: T, value: Primitive) => boolean;
-    /** Para selects */
+
+    /** For select fields. */
     options?: SelectOption[];
-    /** Valor por defecto visual */
+
+    /** Default value shown when mounting. */
     defaultValue?: Primitive;
 }
 

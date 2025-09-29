@@ -1,18 +1,25 @@
-import {BaseEntity, ID} from "../shared/types";
+export type ID = string;
+export type ISODateTime = string;
 
-/**
- * Gasto: copiado de `src/lib/shared/types.ts` (branch `junie`).
- */
+export interface BaseEntity {
+    id: ID;
+    createdAt: ISODateTime;
+    updatedAt: ISODateTime;
+    isActive: boolean;
+}
+
+export type TipoPrecio = 'bruto' | 'neto';
+
 export interface Gasto extends BaseEntity {
     eventoId: ID;
     producto: string;
     unidad: string;
     cantidad: number;
-    tipoPrecio: 'bruto' | 'neto';
-    tipoIVA: number;
-    base: number;
-    iva: number;
-    total: number;
+    tipoPrecio: TipoPrecio;
+    tipoIVA: number;   // 0 | 4 | 10 | 21 | ...
+    base: number;      // sin IVA
+    iva: number;       // importe IVA
+    total: number;     // con IVA
     isPack: boolean;
     unidadesPack?: number;
     precioUnidad?: number;
@@ -23,10 +30,8 @@ export interface Gasto extends BaseEntity {
     locked: boolean;
 }
 
-
-// (Opcional) filtros de uso común para listados de gastos
 export interface GastoFilters {
-    q?: string; // texto libre (producto/tienda/pagador)
+    q?: string;
     tienda?: string;
     pagador?: string;
     comprobado?: boolean;
