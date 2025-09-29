@@ -17,7 +17,7 @@ export const GastoSchema = z.object({
   precioUnidad: z.number().finite().positive().optional(),
   pagador: z.string().trim().max(60).optional(),
   tienda: z.string().trim().max(60).optional(),
-  notas: z.string().trim().max(500).optional(),
+  notas: z.string().trim().max(500).optional().transform(v => (v === '' ? undefined : v)),
   comprobado: z.boolean().default(false),
   locked: z.boolean().default(false),
   createdAt: z.string().optional(),
