@@ -1,4 +1,4 @@
-import {BaseEntity} from '../shared/types';
+import {BaseEntity} from "../globalTypes";
 
 export interface Reserva extends BaseEntity {
     eventoId: string;

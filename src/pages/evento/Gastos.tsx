@@ -1,4 +1,5 @@
 // pages/evento/Gastos.tsx
+import "../../lib/gastos/presets";
 import {useMemo, useState} from "react";
 import {getUiForEntity} from "../../lib/ui/facade";
 import {ViewMode} from "../../lib/ui/contracts";
@@ -7,8 +8,11 @@ import type {FilterValues} from "../../components/ui/FilterBar/types";
 import DataTable from "../../components/ui/DataTable";
 
 export default function Gastos(): JSX.Element {
-    const [mode] = useState<ViewMode>("compact");
-    const ui = useMemo(() => getUiForEntity("gastos", mode), [mode]);
+    //const [mode] = useState<ViewMode>("compact");
+    const ui = getUiForEntity("gastos", "compact");
+
+
+    console.log("?¿?¿¿??¿¿¿",ui)
 
     const [filters, setFilters] = useState<FilterValues>({});
 

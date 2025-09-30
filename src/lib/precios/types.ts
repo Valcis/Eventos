@@ -1,4 +1,4 @@
-import {BaseEntity} from '../shared/types';
+import {BaseEntity} from "../globalTypes";
 
 export interface Precio extends BaseEntity {
     eventoId: string;

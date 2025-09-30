@@ -9,7 +9,6 @@ function unwrap(inner: ZodUnknownObject): ZodUnknownObject {
     // hasta llegar al tipo base.
     // El orden importa: effects/coerce suelen envolver al resto.
     // NOTA: z.ZodReadonly existe desde zod 3.23+, si no la usas elimina ese bloque.
-    // @ts-expect-error — narrow por nombre interno sin usar 'any'
     const typeName: string = inner._def?.typeName ?? "";
 
     if (typeName === z.ZodFirstPartyTypeKind.ZodOptional) return unwrap((inner as z.ZodOptional<ZodUnknownObject>)._def.innerType);
@@ -83,7 +82,7 @@ export function zodObjectToColumnMeta(
         const opts = enumOptions(base);
 
         const meta: ColumnMeta = {
-            id: key,
+            column: key,
             kind: typeKind,
             ...(opts && opts.length > 0 ? { options: opts } : {}),
         };

@@ -1,4 +1,3 @@
-// lib/ui/registry.ts
 import {ColumnMeta} from "./contracts";
 import {gastosColumns} from "../gastos/schema.columns";
 import {reservasColumns} from "../reservas/schema.columns";
@@ -13,7 +12,19 @@ const map: Record<Entity, ReadonlyArray<ColumnMeta>> = {
 };
 
 export function getSchemaColumns(entity: Entity): ReadonlyArray<ColumnMeta> {
-    const cols = map[entity];
-    if (!cols) throw new Error(`Sin columnas de esquema para entidad: ${entity}`);
-    return cols;
+    const columns = map[entity];
+    if (!columns) {
+        throw new Error(`Registry error: no hay columnas registradas para la entidad "${entity}".`);
+    }
+    // Validación mínima: cada columna debe tener nombre
+    for (const [index, c] of columns.entries()) {
+        if (!c.column || c.column.trim().length === 0) {
+            throw new Error(`Registry error: columna sin "column" en ${entity}.schema.columns[${index}].`);
+        }
+    }
+    return columns;
+}
+
+export function listEntities(): ReadonlyArray<Entity> {
+    return Object.keys(map) as Entity[];
 }

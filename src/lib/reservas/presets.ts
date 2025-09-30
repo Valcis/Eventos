@@ -1,37 +1,59 @@
-// lib/reservas/presets.ts
-// Presets para RESERVAS, derivados del schema.columns (sin duplicar IDs).
-// - catalog: se genera con label a partir del id (Title Case).
-// - views: compact = primeras 6 columnas; expanded = todas (ajústalo si quieres).
-// - search: por defecto usa todas con el mismo label (ajústalo libremente).
+import { TablePreset, SearchPreset } from "../ui/contracts";
+import { registerPresets } from "../ui/presetsStore";
 
-import {TablePreset, SearchPreset, ColumnOverride} from "../ui/contracts";
-import {reservasColumns} from "./schema.columns";
-
-function toTitleCase(input: string): string {
-    // "reservaId" -> "Reserva Id", "created_at" -> "Created At"
-    const spaced = input
-        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-        .replace(/[_\-\.]+/g, " ")
-        .trim();
-    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
-const catalog: ReadonlyArray<ColumnOverride> = reservasColumns.map((c) => ({
-    id: c.id,
-    label: toTitleCase(c.id),
-}));
-
-const compactIds = catalog.slice(0, Math.min(6, catalog.length)).map((c) => ({id: c.id}));
-const expandedIds = catalog.map((c) => ({id: c.id}));
-
-export const reservasTablePreset: TablePreset = {
-    catalog,
+const table: TablePreset = {
+    catalog: [
+        { column: "eventoId",        label: "Evento",          order: 10,  filterable: true, sortable: true },
+        { column: "cliente",         label: "Cliente",         order: 20,  filterable: true, sortable: true, tooltipText: "Nombre de quien reserva" },
+        { column: "parrilladas",     label: "Parrilladas",     order: 30,  filterable: true, sortable: true, align: "right", defaultValue: 0 },
+        { column: "picarones",       label: "Picarones",       order: 40,  filterable: true, sortable: true, align: "right", defaultValue: 0 },
+        { column: "metodoPagoId",    label: "Método de pago",  order: 50,  filterable: true, sortable: true },
+        { column: "receptorId",      label: "Receptor",        order: 60,  filterable: true, sortable: true },
+        { column: "tipoConsumoId",   label: "Tipo de consumo", order: 70,  filterable: true, sortable: true },
+        { column: "comercialId",     label: "Comercial",       order: 80,  filterable: true, sortable: true },
+        { column: "totalPedido",     label: "Total pedido",    order: 90,  filterable: true, sortable: true, align: "right", defaultSort: "desc" },
+        { column: "pagado",          label: "Pagado",          order: 100, filterable: true, sortable: true, align: "center", defaultValue: false },
+        { column: "comprobado",      label: "Comprobado",      order: 110, filterable: true, sortable: true, align: "center", defaultValue: false },
+        { column: "locked",          label: "Bloqueado",       order: 120, filterable: true, sortable: true, align: "center", defaultValue: false },
+        { column: "puntoRecogidaId", label: "Punto recogida",  order: 130, filterable: true, sortable: true },
+        { column: "createdAt",       label: "Creado",          order: 140, filterable: true, sortable: true },
+        { column: "updatedAt",       label: "Actualizado",     order: 150, filterable: true, sortable: true },
+        { column: "isActive",        label: "Activo",          order: 160, filterable: true, sortable: true, align: "center", defaultValue: true },
+    ],
     views: {
-        compact: compactIds,
-        expanded: expandedIds,
+        compact: [
+            "cliente",
+            "parrilladas",
+            "picarones",
+            "totalPedido",
+            "pagado",
+        ],
+        expanded: [
+            "eventoId",
+            "cliente",
+            "parrilladas",
+            "picarones",
+            "metodoPagoId",
+            "receptorId",
+            "tipoConsumoId",
+            "comercialId",
+            "totalPedido",
+            "pagado",
+            "comprobado",
+            "locked",
+        ],
     },
 };
 
-export const reservasSearchPreset: SearchPreset = {
-    fields: catalog.map((c) => ({id: c.id, label: c.label})),
+const search: SearchPreset = {
+    fields: [
+        "cliente",
+        "metodoPagoId",
+        "tipoConsumoId",
+        "comercialId",
+        "pagado",
+        "comprobado",
+    ],
 };
+
+registerPresets("reservas", { table, search });

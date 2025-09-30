@@ -26,10 +26,9 @@ export const gastosColumns: ReadonlyArray<ColumnMeta> = zodObjectToColumnMeta(ga
 if (process.env.NODE_ENV !== "production") {
     const seen = new Set<string>();
     for (const c of gastosColumns) {
-        if (seen.has(c.id)) {
-            // eslint-disable-next-line no-console
-            console.error(`[gastos] ID de columna duplicado: ${c.id}`);
+        if (seen.has(c.column)) {
+            console.error(`[gastos] ID de columna duplicado: ${c.column}`);
         }
-        seen.add(c.id);
+        seen.add(c.column);
     }
 }

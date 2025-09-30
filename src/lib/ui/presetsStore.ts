@@ -1,5 +1,5 @@
-import {TablePreset, SearchPreset} from "../ui/contracts";
-import {Entity} from "./registry";
+import {TablePreset, SearchPreset} from "./contracts";
+import type {Entity} from "./registry";
 
 export interface EntityPresets {
     table: TablePreset;
@@ -8,7 +8,7 @@ export interface EntityPresets {
 
 const registry: Partial<Record<Entity, EntityPresets>> = {};
 
-/** Registra presets para una entidad (llamar en bootstrap de cada módulo). */
+/** Registra presets para una entidad (llamar desde cada módulo de entidad). */
 export function registerPresets(entity: Entity, presets: EntityPresets): void {
     registry[entity] = presets;
 }
@@ -17,7 +17,10 @@ export function registerPresets(entity: Entity, presets: EntityPresets): void {
 export function getPresets(entity: Entity): EntityPresets {
     const found = registry[entity];
     if (!found) {
-        throw new Error(`No hay presets registrados para la entidad "${entity}".`);
+        throw new Error(
+            `Presets error: no hay presets registrados para la entidad "${entity}". ` +
+            `Asegúrate de importar el archivo de presets correspondiente antes de usar el façade.`
+        );
     }
     return found;
 }

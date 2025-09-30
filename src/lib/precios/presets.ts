@@ -1,36 +1,40 @@
-// lib/precios/presets.ts
-// Presets para PRECIOS, derivados del schema.columns (sin duplicar IDs).
-// - catalog: se genera con label a partir del id (Title Case).
-// - views: compact = primeras 6 columnas; expanded = todas (ajústalo si quieres).
-// - search: por defecto usa todas con el mismo label (ajústalo libremente).
+import { TablePreset, SearchPreset } from "../ui/contracts";
+import { registerPresets } from "../ui/presetsStore";
 
-import { TablePreset, SearchPreset, ColumnOverride } from "../ui/contracts";
-import { preciosColumns } from "./schema.columns";
-
-function toTitleCase(input: string): string {
-    const spaced = input
-        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-        .replace(/[_\-\.]+/g, " ")
-        .trim();
-    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
-}
-
-const catalog: ReadonlyArray<ColumnOverride> = preciosColumns.map((c) => ({
-    id: c.id,
-    label: toTitleCase(c.id),
-}));
-
-const compactIds = catalog.slice(0, Math.min(6, catalog.length)).map((c) => ({ id: c.id }));
-const expandedIds = catalog.map((c) => ({ id: c.id }));
-
-export const preciosTablePreset: TablePreset = {
-    catalog,
+const table: TablePreset = {
+    catalog: [
+        { column: "eventoId",  label: "Evento",    order: 10, filterable: true, sortable: true },
+        { column: "concepto",  label: "Concepto",  order: 20, filterable: true, sortable: true, tooltipText: "Descripción del concepto" },
+        { column: "importe",   label: "Importe",   order: 30, filterable: true, sortable: true, align: "right", defaultSort: "desc", defaultValue: 0 },
+        { column: "moneda",    label: "Moneda",    order: 40, filterable: true, sortable: true, align: "center" },
+        { column: "locked",    label: "Bloqueado", order: 50, filterable: true, sortable: true, align: "center", defaultValue: false },
+        { column: "createdAt", label: "Creado",    order: 60, filterable: true, sortable: true },
+        { column: "updatedAt", label: "Actualizado", order: 70, filterable: true, sortable: true },
+        { column: "isActive",  label: "Activo",    order: 80, filterable: true, sortable: true, align: "center", defaultValue: true },
+    ],
     views: {
-        compact: compactIds,
-        expanded: expandedIds,
+        compact: [
+            "concepto",
+            "importe",
+            "moneda",
+        ],
+        expanded: [
+            "eventoId",
+            "concepto",
+            "importe",
+            "moneda",
+            "locked",
+        ],
     },
 };
 
-export const preciosSearchPreset: SearchPreset = {
-    fields: catalog.map((c) => ({ id: c.id, label: c.label })),
+const search: SearchPreset = {
+    fields: [
+        "concepto",
+        "importe",
+        "moneda",
+        "locked",
+    ],
 };
+
+registerPresets("precios", { table, search });
