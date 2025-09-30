@@ -1,5 +1,5 @@
 // pages/evento/Gastos.tsx
-import "../../lib/gastos/presets";
+
 import {useMemo, useState} from "react";
 import {getUiForEntity} from "../../lib/ui/facade";
 import {ViewMode} from "../../lib/ui/contracts";

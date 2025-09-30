@@ -8,7 +8,7 @@ import type {UiProjection, ViewMode} from "./contracts";
  * Punto de entrada para componentes.
  * Devuelve columnas resueltas + filtros + defaultSort para una entidad y vista.
  */
-export function getUiForEntity(entity: Entity, mode: ViewMode = "compact"): UiProjection {
+export function getUiForEntity(entity: Entity, mode: ViewMode = "expanded"): UiProjection {
     try {
         // 1) Meta (fuente de verdad desde .sot → schema.columns)
         const meta = getSchemaColumns(entity);

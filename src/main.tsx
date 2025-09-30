@@ -4,6 +4,11 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import App from './App';
 import './styles/index.css';
 
+//Presets de tablas
+import "./lib/gastos/presets";
+import "./lib/reservas/presets";
+import "./lib/precios/presets";
+
 // Páginas
 import Home from './pages/Home';
 import Reservas from './pages/evento/Reservas';

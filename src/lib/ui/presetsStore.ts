@@ -10,6 +10,9 @@ const registry: Partial<Record<Entity, EntityPresets>> = {};
 
 /** Registra presets para una entidad (llamar desde cada módulo de entidad). */
 export function registerPresets(entity: Entity, presets: EntityPresets): void {
+    if (import.meta.env.DEV && registry[entity]) {
+        console.warn(`[presets] Reemplazando presets existentes para "${entity}".`);
+    }
     registry[entity] = presets;
 }
 

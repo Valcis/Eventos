@@ -1,7 +1,5 @@
 import React, {FC} from 'react';
 import {Outlet, NavLink, Link, useParams} from 'react-router-dom';
-
-// Providers tomados de UiProviders.tsx (rutas relativas, sin alias @)
 import {ToastProvider} from './components/ui/Toast';
 import {AlertConfirmProvider} from './components/ui/AlertConfirm';
 

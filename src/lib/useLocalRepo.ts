@@ -1,39 +1,50 @@
-import { useState } from 'react';
-import * as db from '../store/localdb';
-import {BaseEntity} from "./globalTypes";
+// src/lib/useLocalRepo.ts
+import {useCallback, useMemo, useState} from "react";
+import * as db from "../store/localdb";
+import type {BaseEntity, TableName} from "./globalTypes";
 
 
-export type TableName =
-    | 'eventos'
-    | 'reservas'
-    | 'gastos'
-    | 'precios'
-    | 'selectores';
+type BaseKeys = keyof BaseEntity;
 
-export type WithoutBase<T extends BaseEntity> = Omit<T, keyof BaseEntity>;
+export type NewEntity<T extends BaseEntity> = Omit<T, BaseKeys>;
+export type UpdatePatch<T extends BaseEntity> = Partial<Omit<T, BaseKeys>>;
 
-export function useLocalRepo<T extends BaseEntity>(name: TableName) {
-    const [items, setItems] = useState<T[]>(() => db.list<T>(name));
-    const refresh = () => setItems(db.list<T>(name));
-
-    const create = (data: WithoutBase<T>): T => {
-        const entity = db.create<T>(name, data); // db.create añade id/timestamps
-        refresh();
-        return entity;
-    };
-
-    const update = (id: string, patch: Partial<T>) => {
-        db.update<T>(name, id, patch);
-        refresh();
-    };
-
-    const remove = (id: string) => {
-        db.remove(name, id);
-        refresh();
-    };
-
-    return { items, create, update, remove, refresh };
+export interface UseLocalRepoResult<T extends BaseEntity> {
+    readonly items: ReadonlyArray<T>;
+    create: (data: NewEntity<T>) => T;
+    update: (id: T["id"], patch: UpdatePatch<T>) => void; // <-- ahora void
+    remove: (id: T["id"]) => void;
+    refresh: () => void;
 }
 
-// Export de nombre antiguo para transición rápida (opcional):
+export function useLocalRepo<T extends BaseEntity>(name: TableName): UseLocalRepoResult<T> {
+    const [items, setItems] = useState<ReadonlyArray<T>>(() => db.list<T>(name));
+
+    const refresh = useCallback(() => {
+        const next = db.list<T>(name);
+        setItems(prev => (prev === next ? prev : next));
+    }, [name]);
+
+    const create = useCallback((data: NewEntity<T>): T => {
+        const created = db.create<T>(name, data as Omit<T, BaseKeys> as T);
+        refresh();
+        return created;
+    }, [name, refresh]);
+
+    const update = useCallback((id: T["id"], patch: UpdatePatch<T>): void => {
+        db.update<T>(name, id, patch as Partial<T>); // db.update devuelve void
+        refresh();
+    }, [name, refresh]);
+
+    const remove = useCallback((id: T["id"]): void => {
+        db.remove(name, id);
+        refresh();
+    }, [name, refresh]);
+
+    return useMemo(
+        () => ({items, create, update, remove, refresh}),
+        [items, create, update, remove, refresh]
+    );
+}
+
 export const useCrud = useLocalRepo;
