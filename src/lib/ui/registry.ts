@@ -1,27 +1,19 @@
+// lib/ui/registry.ts
 import {ColumnMeta} from "./contracts";
+import {gastosColumns} from "../gastos/schema.columns";
+import {reservasColumns} from "../reservas/schema.columns";
+import {preciosColumns} from "../precios/schema.columns";
 
-export type Entity = "gastos" | "reservas" | "precios"; // añade las que tengas
+export type Entity = "gastos" | "reservas" | "precios";
 
-type MetaResolver = () => ReadonlyArray<ColumnMeta>;
-
-const resolvers: Record<Entity, MetaResolver> = {
-    gastos: () => {
-        // IMPORTA de tus esquemas REALES de gastos (sin alias).
-        // Ejemplo de cómo sería, sustituye la ruta por la tuya:
-        // import { gastosColumns } from "../../lib/gastos/schemaColumns";
-        // return gastosColumns;
-
-        // Placeholder seguro: deja un array vacío para no romper compilación
-        return [];
-    },
-    reservas: () => {
-        return [];
-    },
-    precios: () => {
-        return [];
-    },
+const map: Record<Entity, ReadonlyArray<ColumnMeta>> = {
+    gastos: gastosColumns,
+    reservas: reservasColumns,
+    precios: preciosColumns,
 };
 
 export function getSchemaColumns(entity: Entity): ReadonlyArray<ColumnMeta> {
-    return resolvers[entity]();
+    const cols = map[entity];
+    if (!cols) throw new Error(`Sin columnas de esquema para entidad: ${entity}`);
+    return cols;
 }

@@ -1,37 +1,36 @@
-import type {Precio} from './types';
-import type {ColumnDef} from '../../components/ui/DataTable/types';
-import type {FilterField} from '../../components/ui/FilterBar/types';
+// lib/precios/presets.ts
+// Presets para PRECIOS, derivados del schema.columns (sin duplicar IDs).
+// - catalog: se genera con label a partir del id (Title Case).
+// - views: compact = primeras 6 columnas; expanded = todas (ajústalo si quieres).
+// - search: por defecto usa todas con el mismo label (ajústalo libremente).
 
-export interface Preset<Row> {
-    columnsDetailed: Array<ColumnDef<Row>>;
-    columnsSimple?: Array<ColumnDef<Row>>;
-    filters: Array<FilterField<Row>>;
-    defaultPageSize?: number;
-    defaultSort?: { columnId: string; direction: 'asc' | 'desc' };
-    formSchema?: Array<{
-        id: keyof Row | string;
-        label: string;
-        type: 'text' | 'number' | 'select' | 'date' | 'boolean';
-        required?: boolean;
-        options?: Array<{ label: string; value: string }>;
-    }>;
+import { TablePreset, SearchPreset, ColumnOverride } from "../ui/contracts";
+import { preciosColumns } from "./schema.columns";
+
+function toTitleCase(input: string): string {
+    const spaced = input
+        .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+        .replace(/[_\-\.]+/g, " ")
+        .trim();
+    return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
 
-export const preciosPreset: Preset<Precio> = {
-    columnsDetailed: [
-        {id: 'concepto', header: 'Concepto', accessorKey: 'concepto', isSortable: true, isSimpleKey: true},
-        {id: 'importe', header: 'Importe', accessorKey: 'importe', align: 'right', isSortable: true, isSimpleKey: true},
-        {id: 'locked', header: 'Bloqueado', accessorKey: 'locked', isSortable: true},
-    ],
-    columnsSimple: [
-        {id: 'concepto', header: 'Concepto', accessorKey: 'concepto', isSortable: true, isSimpleKey: true},
-        {id: 'importe', header: 'Importe', accessorKey: 'importe', align: 'right', isSortable: true, isSimpleKey: true},
-    ],
-    filters: [
-        {id: 'q', label: 'Texto', type: 'text'},
-        {id: 'concepto', label: 'Concepto', type: 'text'},
-        {id: 'locked', label: 'Bloqueado', type: 'boolean'},
-    ],
-    defaultPageSize: 10,
-    defaultSort: {columnId: 'importe', direction: 'desc'},
+const catalog: ReadonlyArray<ColumnOverride> = preciosColumns.map((c) => ({
+    id: c.id,
+    label: toTitleCase(c.id),
+}));
+
+const compactIds = catalog.slice(0, Math.min(6, catalog.length)).map((c) => ({ id: c.id }));
+const expandedIds = catalog.map((c) => ({ id: c.id }));
+
+export const preciosTablePreset: TablePreset = {
+    catalog,
+    views: {
+        compact: compactIds,
+        expanded: expandedIds,
+    },
+};
+
+export const preciosSearchPreset: SearchPreset = {
+    fields: catalog.map((c) => ({ id: c.id, label: c.label })),
 };

@@ -1,41 +1,51 @@
+// lib/ui/contracts.ts
 export type FieldKind = "text" | "number" | "select" | "date" | "boolean";
 
 export interface ColumnMeta {
-    id: string;            // del esquema
-    kind: FieldKind;       // del esquema
+    id: string;
+    kind: FieldKind;
     options?: ReadonlyArray<{ value: string; label: string }>;
 }
 
-/** Overrides dirigidos por preset (no redefinen el esquema) */
-export interface ColumnOverride extends ColumnMeta{
-    id: string;            // referencia a columna del esquema
-    label: string;         // nombre amigable de la columna
-    visible?: boolean;     // visible por defecto
-    order?: number;        // orden en la vista (si lo usas)
+/** Lo que ESCRIBES en presets (RAW) */
+export interface ColumnOverride {
+    id: string;
+    label?: string;
+    visible?: boolean;
+    hidden?: boolean;
+    order?: number;
     widthPx?: number;
-    hidden?: boolean;      // o visible?: boolean, elige uno
-    filterable?: boolean;  // útil para SearchPreset
-    align?: "left" | "center" | "right";
-    sortable?: boolean;
-    defaultSort?: "asc" | "desc";
+    filterable?: boolean;
 }
 
-/** Modificado: ahora arrays de OBJETOS, no solo IDs */
 export type ViewMode = "compact" | "expanded";
 
+/** RAW (entrada) */
 export interface TablePreset {
-    allColumns: ReadonlyArray<ColumnOverride>;
-    /** Catálogo completo de columnas de la entidad (id + overrides base) */
     catalog: ReadonlyArray<ColumnOverride>;
-    /** Vistas: orden y overrides específicos por vista */
     views: Readonly<Record<ViewMode, ReadonlyArray<ColumnOverride>>>;
 }
-
 export interface SearchPreset {
-    /** Campos filtrables (id + overrides opcionales específicos de filtro) */
     fields: ReadonlyArray<ColumnOverride>;
 }
 
+/** RESUELTO (tras normalize) */
+export interface ColumnResolved {
+    id: string;
+    kind: FieldKind;
+    label: string;
+    widthPx?: number;
+    visible: boolean;
+}
+export interface TablePresetResolved {
+    catalog: ReadonlyArray<ColumnResolved>;
+    views: Readonly<Record<ViewMode, ReadonlyArray<ColumnResolved>>>;
+}
+export interface SearchPresetResolved {
+    fields: ReadonlyArray<ColumnResolved>;
+}
+
+/** Salida final para componentes */
 export interface TableColumn {
     id: string;
     header: string;
@@ -43,14 +53,12 @@ export interface TableColumn {
     visible: boolean;
     widthPx?: number;
 }
-
 export interface FilterField {
     id: string;
     label: string;
     type: FieldKind;
     options?: ReadonlyArray<{ value: string; label: string }>;
 }
-
 export interface UiProjection {
     columns: ReadonlyArray<TableColumn>;
     filters: ReadonlyArray<FilterField>;

@@ -1,85 +1,53 @@
-// Transforma: (Schema Columns) + (Presets por IDs) -> Configs de UI listas.
+// lib/ui/builders.ts
 import {
-    ColumnMeta, TableColumn, FilterField, UiProjection, ViewMode, TablePreset, SearchPreset,
+    ColumnMeta, TablePresetResolved, SearchPresetResolved,
+    TableColumn, FilterField, UiProjection, ViewMode,
 } from "./contracts";
 
-function indexById(columns: ReadonlyArray<ColumnMeta>): Record<string, ColumnMeta> {
-    const map: Record<string, ColumnMeta> = {};
-    for (const c of columns) map[c.id] = c;
-    return map;
-}
-
-function uniqKeepOrder(xs: ReadonlyArray<string>): ReadonlyArray<string> {
-    const seen = new Set<string>();
-    const out: string[] = [];
-    for (const x of xs) {
-        if (!seen.has(x)) {
-            seen.add(x);
-            out.push(x);
-        }
-    }
+function indexMeta(meta: ReadonlyArray<ColumnMeta>): Record<string, ColumnMeta> {
+    const out: Record<string, ColumnMeta> = {};
+    for (const m of meta) out[m.id] = m;
     return out;
 }
 
-export function buildTableColumns(
-    allColumnsFromSchema: ReadonlyArray<ColumnMeta>,
-    tablePreset: TablePreset,
+export function buildTableColumnsResolved(
+    table: TablePresetResolved,
     mode: ViewMode
 ): ReadonlyArray<TableColumn> {
-    const byId = indexById(allColumnsFromSchema);
-
-    // Limpiamos universo a lo que dice el preset (IDs existentes y no ocultas)
-    const universe = tablePreset.allColumns.filter((id) => !!byId[id]);
-    const viewIds = uniqKeepOrder(tablePreset.views[mode]).filter((id) => universe.includes(id));
-
-    const columns: TableColumn[] = viewIds.map((id) => {
-        const meta = byId[id];
-        const ov = tablePreset.columnOverrides?.[id];
-        const finalHidden = ov?.hidden ?? meta.hidden ?? false;
-        const visible = !finalHidden;
-
-        return {
-            id: meta.id,
-            header: meta.label,
-            accessorKey: meta.id,
-            visible,
-            widthPx: ov?.widthPx ?? meta.widthPx,
-        };
-    });
-
-    return columns;
+    const cols = table.views[mode];
+    return cols.map(c => ({
+        id: c.id,
+        header: c.label,
+        accessorKey: c.id,
+        visible: c.visible,
+        widthPx: c.widthPx,
+    }));
 }
 
-export function buildFilterFields(
-    allColumnsFromSchema: ReadonlyArray<ColumnMeta>,
-    searchPreset: SearchPreset
+export function buildFilterFieldsResolved(
+    meta: ReadonlyArray<ColumnMeta>,
+    search: SearchPresetResolved
 ): ReadonlyArray<FilterField> {
-    const byId = indexById(allColumnsFromSchema);
-    const ids = uniqKeepOrder(searchPreset.fields).filter((id) => !!byId[id]);
-
-    const filters: FilterField[] = ids.map((id) => {
-        const meta = byId[id];
-        const ov = searchPreset.filterOverrides?.[id];
-
+    const byId = indexMeta(meta);
+    return search.fields.map(f => {
+        const m = byId[f.id];
         return {
-            id: meta.id,
-            label: ov?.label ?? meta.label,
-            type: meta.kind,
-            ...(meta.options && meta.options.length > 0 ? {options: meta.options} : {}),
+            id: f.id,
+            label: f.label,
+            type: m.kind, // opciones abajo
+            ...(m.options && m.options.length > 0 ? { options: m.options } : {}),
         };
     });
-
-    return filters;
 }
 
-export function buildUiProjection(
-    allColumnsFromSchema: ReadonlyArray<ColumnMeta>,
-    tablePreset: TablePreset,
-    searchPreset: SearchPreset,
+export function buildUiProjectionResolved(
+    meta: ReadonlyArray<ColumnMeta>,
+    table: TablePresetResolved,
+    search: SearchPresetResolved,
     mode: ViewMode
 ): UiProjection {
     return {
-        columns: buildTableColumns(allColumnsFromSchema, tablePreset, mode),
-        filters: buildFilterFields(allColumnsFromSchema, searchPreset),
+        columns: buildTableColumnsResolved(table, mode),
+        filters: buildFilterFieldsResolved(meta, search),
     };
 }
