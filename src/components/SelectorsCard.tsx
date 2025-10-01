@@ -1,187 +1,238 @@
-import { JSX } from 'react';
-import { useCallback, useEffect, useState } from 'react';
-import { Plus, Info, Pencil, Trash2, Eye, Settings } from 'lucide-react';
-import { useAlertConfirm } from './ui/AlertConfirm';
-import {SELECTOR_CONFIG, SelectorKind} from '../lib/selectores/types';
-import IconButton from './ui/IconButton';
-import MiniTable from './ui/MiniTable';
-import ActiveCheckbox from './ui/ActiveCheckbox';
-import SelectorsModal, { RowBase } from './SelectorsModal';
-import { getSelectors, removeSelector, upsertSelector } from '../store/localdb';
+import React, { useMemo, useState, useCallback } from "react";
+import MiniTable from "./ui/MiniTable";
+import SelectorsModal from "./SelectorsModal";
 
-export default function SelectorsCard({
-  kind,
-  eventId,
-  query,
-}: {
-  kind: SelectorKind;
-  eventId: string;
-  query: string;
-}): JSX.Element {
-  const { confirm } = useAlertConfirm();
-  const cfg = SELECTOR_CONFIG[kind];
-  const [items, setItems] = useState<RowBase[]>([]);
+// Tipos mínimos y estrictos
+export interface BaseItem {
+    id: string;
+    nombre: string;
+    isActive: boolean;
+    notas?: string;
+    [k: string]: unknown;
+}
 
-  type ModalMode = 'create' | 'edit' | 'info';
-  const [modal, setModal] = useState<{ mode: ModalMode; item?: RowBase } | null>(null);
-  const isModalOpen = modal !== null;
-  const isReadOnly = modal?.mode === 'info';
+export interface ListColumn<T extends BaseItem = BaseItem> {
+    key: keyof T & string;
+    header: string;
+    isHidden?: boolean;
+    width?: string | number;
+    render?: (row: T) => React.ReactNode;
+}
 
-  const load = useCallback(() => {
-    const all = getSelectors<RowBase>(eventId, kind);
-    if (!query.trim()) {
-      setItems(all);
-      return;
-    }
-    const q = query.toLowerCase();
-    setItems(
-      all.filter((x) =>
-        String(x.nombre ?? '')
-          .toLowerCase()
-          .includes(q),
-      ),
+export interface FilterField {
+    key: string;
+    label: string;
+    type: "text" | "select" | "checkbox" | "number";
+    options?: Array<{ value: string | number | boolean; label: string }>;
+}
+
+export interface FilterConfig<T extends BaseItem = BaseItem> {
+    fields: FilterField[];
+    defaultState: Record<string, unknown>;
+    apply: (rows: T[], state: Record<string, unknown>) => T[];
+}
+
+export interface SelectorsCardProps<T extends BaseItem = BaseItem> {
+    title: string;
+    columns: Array<ListColumn<T>>;
+    rows: T[];
+    filters?: FilterConfig<T>;
+    isReadOnly?: boolean;
+
+    // Acciones de fila (opcional)
+    onEdit?: (row: T) => void;
+    onDelete?: (row: T) => void;
+
+    // Modal interno opcional (si no usas onEdit)
+    modal?: {
+        title: string;
+        fields: React.ComponentProps<typeof SelectorsModal>["fields"];
+        validate?: React.ComponentProps<typeof SelectorsModal>["validate"];
+        save?: React.ComponentProps<typeof SelectorsModal>["save"];
+    };
+    onSaved?: () => void;
+}
+
+export default function SelectorsCard<T extends BaseItem>({
+                                                              title,
+                                                              columns,
+                                                              rows,
+                                                              filters,
+                                                              isReadOnly = false,
+                                                              onEdit,
+                                                              onDelete,
+                                                              modal,
+                                                              onSaved,
+                                                          }: SelectorsCardProps<T>): JSX.Element {
+    // Filtros
+    const [filterState, setFilterState] = useState<Record<string, unknown>>(filters?.defaultState ?? {});
+    const filteredRows = useMemo<T[]>(
+        () => (filters ? filters.apply(rows, filterState) : rows),
+        [filters, rows, filterState]
     );
-  }, [eventId, kind, query]);
 
-  useEffect(load, [load]);
+    // Búsqueda rápida básica
+    const [q, setQ] = useState<string>("");
+    const quickRows = useMemo<T[]>(() => {
+        const s = q.trim().toLowerCase();
+        if (!s) return filteredRows;
+        return filteredRows.filter((r) => {
+            const nombre = String((r as BaseItem).nombre ?? "").toLowerCase();
+            const notas = String((r as BaseItem).notas ?? "").toLowerCase();
+            return nombre.includes(s) || notas.includes(s);
+        });
+    }, [q, filteredRows]);
 
-  const toggleActivo = (r: RowBase, next: boolean): void => {
-    const updated: RowBase = { ...r, activo: next };
-    upsertSelector<RowBase>(eventId, kind, updated);
-    setItems((prev) => prev.map((x) => (x.id === r.id ? updated : x)));
-  };
+    // Modal interno (edición/creación simple)
+    const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+    const [editing, setEditing] = useState<T | null>(null);
 
-  const remove = async (r: RowBase): Promise<void> => {
-    if (!r.id) return;
-    const ok = await confirm({
-      title: 'Eliminar línea',
-      description: r.nombre
-        ? `Se eliminará “${String(r.nombre)}”. Esta acción no se puede deshacer.`
-        : 'Esta acción no se puede deshacer.',
-      confirmText: 'Eliminar',
-      cancelText: 'Cancelar',
-      isDestructive: true,
-    });
-    if (!ok) return;
-    removeSelector(eventId, kind, String(r.id));
-    setItems((prev) => prev.filter((x) => x.id !== r.id));
-  };
-
-  const openCreate = (): void => setModal({ mode: 'create' });
-  const openEdit = (r: RowBase): void => setModal({ mode: 'edit', item: r });
-  const openInfo = (r: RowBase): void => setModal({ mode: 'info', item: r });
-
-  const columns = cfg.tableColumns; // "Activo" primero
-
-  return (
-    <section className="rounded-2xl border bg-white shadow-sm">
-      <header className="flex items-center gap-2 border-b p-3">
-        <div className="font-medium">{cfg.title}</div>
-        <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs">{items.length}</span>
-        <div className="ml-auto flex items-center gap-1">
-          <IconButton ariaLabel={`Añadir en ${cfg.title}`} size="xs" onClick={openCreate}>
-            <Plus size={13} />
-          </IconButton>
-        </div>
-      </header>
-
-      <div className="p-3">
-        {items.length === 0 ? (
-          <div className="text-sm text-gray-500">Sin datos. Añade el primero.</div>
-        ) : (
-          <MiniTable
-            columns={columns}
-            rows={items}
-            density="compact"
-            // 👇 Cabeceras con iconos visibles
-            renderHeader={(col) => {
-              if (col === 'Activo') {
-                return (
-                  <span
-                    title="Activo"
-                    aria-label="Activo"
-                    className="inline-flex items-center justify-center"
-                  >
-                    <Eye size={18} />
-                  </span>
-                );
-              }
-              return col;
-            }}
-            actionsHeader={
-              <span
-                title="Acciones"
-                aria-label="Acciones"
-                className="inline-flex items-center justify-center"
-              >
-                <Settings size={18} />
-              </span>
+    const openEditLocal = useCallback(
+        (row: T) => {
+            if (onEdit) {
+                onEdit(row);
+                return;
             }
-            renderCell={(col, r) => {
-              switch (col) {
-                case 'Tel.':
-                  return String((r.telefono as string | undefined) ?? '—');
-                case 'Requiere receptor':
-                  return (r.requiereReceptor as boolean | undefined) ? 'Sí' : 'No';
-                case 'Abreviatura':
-                  return String((r.abreviatura as string | undefined) ?? '—');
-                case 'Dirección':
-                  return String((r.direccion as string | undefined) ?? '—');
-                case 'Horario':
-                  return String((r.horario as string | undefined) ?? '—');
-                case 'Activo':
-                  return (
-                    <ActiveCheckbox
-                      isChecked={Boolean(r.activo)}
-                      onToggle={(next) => toggleActivo(r, next)}
+            if (!modal) return;
+            setEditing(row);
+            setIsModalOpen(true);
+        },
+        [onEdit, modal]
+    );
+
+    const closeModal = useCallback(() => {
+        setIsModalOpen(false);
+        setEditing(null);
+    }, []);
+
+    const handleSaved = useCallback(() => {
+        closeModal();
+        if (onSaved) onSaved();
+    }, [closeModal, onSaved]);
+
+    return (
+        <section className="border rounded-lg p-3 space-y-3">
+            <div className="flex items-center justify-between">
+                <h3 className="font-semibold">{title}</h3>
+                <div className="flex items-center gap-2">
+                    {filters ? (
+                        <button
+                            type="button"
+                            className="border rounded px-2 py-1 text-sm"
+                            onClick={() => setFilterState(filters.defaultState)}
+                            title="Limpiar filtros"
+                        >
+                            Limpiar
+                        </button>
+                    ) : null}
+                    <input
+                        className="border rounded px-2 py-1 text-sm"
+                        placeholder="Buscar…"
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        aria-label="Búsqueda rápida"
                     />
-                  );
-                default:
-                  return String((r as RowBase).nombre ?? '—');
-              }
-            }}
-            renderActions={(r) => (
-              <>
-                <IconButton ariaLabel="Información" size="xs" onClick={() => openInfo(r)}>
-                  <Info size={13} />
-                </IconButton>
-                <IconButton ariaLabel="Editar" size="xs" onClick={() => openEdit(r)}>
-                  <Pencil size={13} />
-                </IconButton>
-                <IconButton ariaLabel="Borrar" size="xs" onClick={() => remove(r)}>
-                  <Trash2 size={13} />
-                </IconButton>
-              </>
-            )}
-          />
-        )}
-      </div>
+                </div>
+            </div>
 
-      {isModalOpen && (
-        <SelectorsModal
-          title={cfg.title}
-          kind={kind}
-          eventId={eventId}
-          isOpen={isModalOpen}
-          isReadOnly={Boolean(isReadOnly)}
-          {...(modal?.item ? { initial: modal.item } : {})}
-          onClose={() => setModal(null)}
-          onSaved={(saved) => {
-            if (saved) {
-              setItems((prev) => {
-                const idx = prev.findIndex((x) => x.id === saved.id);
-                if (idx >= 0) {
-                  const next = [...prev];
-                  next[idx] = saved;
-                  return next;
+            {filters && filters.fields.length > 0 && (
+                <div className="grid gap-2 md:grid-cols-3">
+                    {filters.fields.map((f) => {
+                        if (f.type === "checkbox") {
+                            const checked = Boolean(filterState[f.key]);
+                            return (
+                                <label key={f.key} className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={checked}
+                                        onChange={(e) => setFilterState((s) => ({ ...s, [f.key]: e.target.checked }))}
+                                    />
+                                    <span>{f.label}</span>
+                                </label>
+                            );
+                        }
+                        if (f.type === "select") {
+                            return (
+                                <label key={f.key} className="flex items-center gap-2">
+                                    <span className="w-32">{f.label}</span>
+                                    <select
+                                        className="flex-1 border rounded px-2 py-1"
+                                        value={String(filterState[f.key] ?? "")}
+                                        onChange={(e) => setFilterState((s) => ({ ...s, [f.key]: e.target.value }))}
+                                    >
+                                        <option value="">—</option>
+                                        {(f.options ?? []).map((o) => (
+                                            <option key={String(o.value)} value={String(o.value)}>
+                                                {o.label}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </label>
+                            );
+                        }
+                        if (f.type === "number") {
+                            return (
+                                <label key={f.key} className="flex items-center gap-2">
+                                    <span className="w-32">{f.label}</span>
+                                    <input
+                                        type="number"
+                                        className="flex-1 border rounded px-2 py-1"
+                                        value={String(filterState[f.key] ?? "")}
+                                        onChange={(e) =>
+                                            setFilterState((s) => ({
+                                                ...s,
+                                                [f.key]: e.target.value === "" ? undefined : Number(e.target.value),
+                                            }))
+                                        }
+                                    />
+                                </label>
+                            );
+                        }
+                        // text
+                        return (
+                            <label key={f.key} className="flex items-center gap-2">
+                                <span className="w-32">{f.label}</span>
+                                <input
+                                    className="flex-1 border rounded px-2 py-1"
+                                    value={String(filterState[f.key] ?? "")}
+                                    onChange={(e) => setFilterState((s) => ({ ...s, [f.key]: e.target.value }))}
+                                />
+                            </label>
+                        );
+                    })}
+                </div>
+            )}
+
+            <MiniTable<BaseItem>
+                columns={columns}
+                rows={quickRows}
+                isReadOnly={isReadOnly}
+                onAction={(actionKey, row) => {
+                    if (actionKey === "edit") openEditLocal(row as T);
+                    if (actionKey === "delete" && onDelete) onDelete(row as T);
+                }}
+                renderFallback={(colKey, row) =>
+                    colKey === "isActive"
+                        ? row.isActive
+                            ? <span className="px-2 py-0.5 rounded bg-green-100">Activo</span>
+                            : <span className="px-2 py-0.5 rounded bg-gray-200">Inactivo</span>
+                        : String((row as Record<string, unknown>)[colKey] ?? "—")
                 }
-                return [saved, ...prev];
-              });
-            }
-            setModal(null);
-          }}
-        />
-      )}
-    </section>
-  );
+            />
+
+            {modal && (
+                <SelectorsModal
+                    isOpen={isModalOpen}
+                    isReadOnly={isReadOnly}
+                    title={modal.title}
+                    fields={modal.fields}
+                    validate={modal.validate}
+                    save={modal.save}
+                    initial={editing ?? undefined}
+                    onClose={closeModal}
+                    onSaved={handleSaved}
+                />
+            )}
+        </section>
+    );
 }
