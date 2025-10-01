@@ -15,7 +15,7 @@ const reservasObject = ((): z.ZodObject<z.ZodRawShape> => {
 const forceDateIds: ReadonlyArray<string> = ["createdAt", "updatedAt"];
 
 // Excluir campos técnicos que no quieras en UI (opcional)
-const excludeIds: ReadonlyArray<string> = [];
+const excludeIds: ReadonlyArray<string> = ["id"];
 
 export const reservasColumns: ReadonlyArray<ColumnMeta> = zodObjectToColumnMeta(reservasObject, {
     forceDateIds,
@@ -25,10 +25,10 @@ export const reservasColumns: ReadonlyArray<ColumnMeta> = zodObjectToColumnMeta(
 if (process.env.NODE_ENV !== "production") {
     const seen = new Set<string>();
     for (const c of reservasColumns) {
-        if (seen.has(c.id)) {
+        if (seen.has(c.column)) {
             // eslint-disable-next-line no-console
-            console.error(`[reservas] ID de columna duplicado en schema: ${c.id}`);
+            console.error(`[reservas] ID de columna duplicado en schema: ${c.column}`);
         }
-        seen.add(c.id);
+        seen.add(c.column);
     }
 }

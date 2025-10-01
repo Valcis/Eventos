@@ -5,6 +5,13 @@ export interface BaseEntity {
     isActive: boolean;
 }
 
+export interface BaseItem {
+    id: string;
+    nombre: string;
+    isActive: boolean;
+    notas?: string;
+}
+
 /** Nombres de tablas soportadas. Ajusta si añades nuevas. */
 export const TABLES = [
     "eventos",

@@ -1,87 +1,89 @@
-import {z} from "zod";
-import {Selectores} from "./types";
+import { z } from 'zod';
 
-/** Esquema base alineado con Selectores.BaseItem (id, nombre, activo, notas). */
-const BaseItemSchema = z.object({
-    id: z.string().min(1),
-    nombre: z.string().trim().min(1).max(120),
-    activo: z.boolean(),
-    notas: z.string().trim().max(500).optional(),
+/**
+ * BaseItem común a todos los selectores.
+ * - id: string
+ * - nombre: string
+ * - isActive: boolean
+ * - notas?: string
+ */
+export const BaseItemSchema = z.object({
+    id: z.string().min(1, 'id_required'),
+    nombre: z.string().min(1, 'nombre_required'),
+    isActive: z.boolean(),
+    notas: z.string().optional(),
 });
 
-/** 1) Comerciales */
-export const ComercialSchema = BaseItemSchema.extend({
-    telefono: z.string().trim().max(20).optional(),
-});
-export type Comercial = Selectores.Comercial;
+export type BaseItem = z.infer<typeof BaseItemSchema>;
 
-/** 2) Métodos de pago */
-export const MetodoPagoSchema = BaseItemSchema.extend({
-    requiereReceptor: z.boolean().optional(),
-});
-export type MetodoPago = Selectores.MetodoPago;
-
-/** 3) Pagadores */
-export const PagadorSchema = BaseItemSchema.extend({
-    telefono: z.string().trim().max(20).optional(),
-});
-export type Pagador = Selectores.Pagador;
-
-/** 4) Tiendas */
-export const TiendaSchema = BaseItemSchema.extend({
-    direccion: z.string().trim().max(200).optional(),
-    horario: z.string().trim().max(120).optional(),
-});
-export type Tienda = Selectores.Tienda;
-
-/** 5) Unidades */
-export const UnidadSchema = BaseItemSchema.extend({
-    abreviatura: z.string().trim().max(12).optional(),
-});
-export type Unidad = Selectores.Unidad;
-
-/** 6) Tipo de precio (nominal por nombre: con_iva/sin_iva) */
-export const TipoPrecioSchema = BaseItemSchema.refine(
-    (v) => ["con_iva", "sin_iva"].includes(v.nombre),
-    {message: "Tipo de precio inválido (usa con_iva / sin_iva)"}
-);
-export type TipoPrecio = Selectores.TipoPrecio;
-
-/** 7) Tipo de consumo (nominal por nombre: comer_aqui/recoger) */
-export const TipoConsumoSchema = BaseItemSchema.refine(
-    (v) => ["comer_aqui", "recoger"].includes(v.nombre),
-    {message: "Tipo de consumo inválido (usa comer_aqui / recoger)"}
-);
-export type TipoConsumo = Selectores.TipoConsumo;
-
-/** 8) Receptor/Cobrador */
-export const ReceptorCobradorSchema = BaseItemSchema.extend({
-    telefono: z.string().trim().max(20).optional(),
-});
-export type ReceptorCobrador = Selectores.ReceptorCobrador;
-
-/** 9) Puntos de recogida */
-export const PuntoRecogidaSchema = BaseItemSchema.extend({
-    direccion: z.string().trim().max(200).optional(),
-    horario: z.string().trim().max(120).optional(),
-    telefono: z.string().trim().max(20).optional(),
-    capacidad: z.number().int().nonnegative().optional(),
-    comentarios: z.string().trim().max(500).optional(),
-});
-export type PuntoRecogida = Selectores.PuntoRecogida;
-
-/** Mapa utilitario para resolver esquema por tabla */
-export const SELECTOR_SCHEMAS = {
-    comerciales: ComercialSchema,
-    metodosPago: MetodoPagoSchema,
-    pagadores: PagadorSchema,
-    tiendas: TiendaSchema,
-    unidades: UnidadSchema,
-    tipoConsumo: TipoConsumoSchema,
-    receptorCobrador: ReceptorCobradorSchema,
-    puntosRecogida: PuntoRecogidaSchema,
-
-    // si necesitas validar/sembrar tipoPrecio de forma separada:
-    tipoPrecio: TipoPrecioSchema,
+/**
+ * Claves canónicas para cada mini-tabla de Selectores.
+ * (Se evita usar literales sueltas en el código)
+ */
+export const selectorKeys = {
+    comercial: 'comercial',
+    metodoPago: 'metodoPago',
+    puntoRecogida: 'puntoRecogida',
+    tipoConsumo: 'tipoConsumo',
+    receptor: 'receptor',
+    cobrador: 'cobrador',
+    unidad: 'unidad',
+    pagador: 'pagador',
+    tienda: 'tienda',
 } as const;
-export type SelectorKind = Selectores.Kind;
+
+export type SelectorKey = typeof selectorKeys[keyof typeof selectorKeys];
+
+/** Comercial: BaseItem + teléfono? */
+export const ComercialSchema = BaseItemSchema.extend({
+    telefono: z.string().optional(),
+});
+
+/** Método de pago: BaseItem + requireReceptor (boolean) */
+export const MetodoPagoSchema = BaseItemSchema.extend({
+    requireReceptor: z.boolean(),
+});
+
+/** Punto de recogida: BaseItem + dirección?/horario?/comentarios? */
+export const PuntoRecogidaSchema = BaseItemSchema.extend({
+    direccion: z.string().optional(),
+    horario: z.string().optional(),
+    comentarios: z.string().optional(),
+});
+
+/** Tipo de consumo: solo BaseItem */
+export const TipoConsumoSchema = BaseItemSchema;
+
+/** Receptor: solo BaseItem */
+export const ReceptorSchema = BaseItemSchema;
+
+/** Cobrador: solo BaseItem */
+export const CobradorSchema = BaseItemSchema;
+
+/** Unidad: solo BaseItem */
+export const UnidadSchema = BaseItemSchema;
+
+/** Pagador: solo BaseItem */
+export const PagadorSchema = BaseItemSchema;
+
+/** Tienda: BaseItem + dirección?/horario? */
+export const TiendaSchema = BaseItemSchema.extend({
+    direccion: z.string().optional(),
+    horario: z.string().optional(),
+});
+
+/**
+ * Registro de esquemas por clave.
+ * Útil para mini-tablas dinámicas (Minitable).
+ */
+export const selectorSchemaRegistry = {
+    [selectorKeys.comercial]: ComercialSchema,
+    [selectorKeys.metodoPago]: MetodoPagoSchema,
+    [selectorKeys.puntoRecogida]: PuntoRecogidaSchema,
+    [selectorKeys.tipoConsumo]: TipoConsumoSchema,
+    [selectorKeys.receptor]: ReceptorSchema,
+    [selectorKeys.cobrador]: CobradorSchema,
+    [selectorKeys.unidad]: UnidadSchema,
+    [selectorKeys.pagador]: PagadorSchema,
+    [selectorKeys.tienda]: TiendaSchema,
+} as const;
