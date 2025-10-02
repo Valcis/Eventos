@@ -5,7 +5,7 @@ export interface Comercial extends BaseItem {
 }
 
 export interface MetodoPago extends BaseItem {
-    requireReceptor: boolean;
+    requiereReceptor: boolean;
 }
 
 export interface PuntoRecogida extends BaseItem {

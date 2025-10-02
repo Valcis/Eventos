@@ -14,7 +14,6 @@ export const BaseItemSchema = z.object({
     notas: z.string().optional(),
 });
 
-export type BaseItem = z.infer<typeof BaseItemSchema>;
 
 /**
  * Claves canónicas para cada mini-tabla de Selectores.
@@ -39,9 +38,9 @@ export const ComercialSchema = BaseItemSchema.extend({
     telefono: z.string().optional(),
 });
 
-/** Método de pago: BaseItem + requireReceptor (boolean) */
+/** Método de pago: BaseItem + requiereReceptor (boolean) */
 export const MetodoPagoSchema = BaseItemSchema.extend({
-    requireReceptor: z.boolean(),
+    requiereReceptor: z.boolean(),
 });
 
 /** Punto de recogida: BaseItem + dirección?/horario?/comentarios? */

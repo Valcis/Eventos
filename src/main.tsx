@@ -8,6 +8,7 @@ import './styles/index.css';
 import "./lib/gastos/presets";
 import "./lib/reservas/presets";
 import "./lib/precios/presets";
+import "./lib/selectores/presets";
 
 // Páginas
 import Home from './pages/Home';

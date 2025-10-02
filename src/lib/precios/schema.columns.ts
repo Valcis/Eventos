@@ -25,10 +25,10 @@ export const preciosColumns: ReadonlyArray<ColumnMeta> = zodObjectToColumnMeta(p
 if (process.env.NODE_ENV !== "production") {
     const seen = new Set<string>();
     for (const c of preciosColumns) {
-        if (seen.has(c.id)) {
+        if (seen.has(c.column)) {
             // eslint-disable-next-line no-console
-            console.error(`[precios] ID de columna duplicado en schema: ${c.id}`);
+            console.error(`[precios] ID de columna duplicado en schema: ${c.column}`);
         }
-        seen.add(c.id);
+        seen.add(c.column);
     }
 }

@@ -4,7 +4,7 @@ import type {FilterField, FilterValues, FilterKind} from './types';
 type Props = {
     fields: ReadonlyArray<FilterField>;
     values: FilterValues; // controlado desde fuera
-    onChange: (next: FilterValues) => void;
+    onChange: (next: Record<string, unknown>) => void;
     title?: string;
     className?: string;
     isCollapsible?: boolean;

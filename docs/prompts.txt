@@ -27,4 +27,7 @@ algunas directrices:
 
 
 
-
+te vuelvo a dejar todas las urls de cada fichero de mi repo en raw , para que lo revises y me
+ayudes a desarrollar apoyandote en el. Ya sabes que no quiero suposiciones, revisa los ficheros
+y desarrolla sobre lo que hay, no me gustan las variables de literal frio o sin semantica,
+nada de any, los import con ruta relativa sin alias y los ficheros en un snipet.
