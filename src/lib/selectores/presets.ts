@@ -20,7 +20,7 @@ import {
     tipoConsumoColumns,
     receptorColumns,
     puntoRecogidaColumns,
-} from "./schemas.colums";
+} from "./schemas.columns";
 
 // -----------------------------
 // 1) Definición de presets (vistas) por selector

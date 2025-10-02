@@ -11,7 +11,7 @@ import {
     tipoConsumoColumns,
     receptorColumns,
     puntoRecogidaColumns,
-} from "../selectores/schemas.colums";
+} from "../selectores/schemas.columns";
 
 export type Entity =
     | "gastos"
@@ -36,7 +36,6 @@ const map: Record<Entity, ReadonlyArray<ColumnMeta>> = {
     tiendas: tiendaColumns,
     unidades: unidadColumns,
     tipoConsumo: tipoConsumoColumns,
-    // receptorCobrador usa el mismo shape base que receptor/cobrador
     receptorCobrador: receptorColumns,
     puntosRecogida: puntoRecogidaColumns,
 

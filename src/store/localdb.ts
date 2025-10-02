@@ -1,8 +1,4 @@
-// src/store/localdb.ts
-// TS estricto, sin any. CRUD genérico sobre localStorage.
-
 import type {BaseEntity, TableName} from "../lib/globalTypes";
-
 
 /** Claves base que aporta BaseEntity. */
 type BaseKeys = keyof BaseEntity;

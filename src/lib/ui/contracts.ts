@@ -1,26 +1,14 @@
-// src/lib/ui/contracts.ts
+import {FieldKind, SelectOption, ValidatorTag, ValueFormat} from "../globalTypes";
 
-// ——— Intrínseco del esquema (derivado de .sot → schema.columns) ———
-export type FieldKind = "text" | "number" | "select" | "date" | "boolean";
-
-export interface SelectOption {
-    value: string;
-    label: string;
-}
-
-export type ValueFormat = "currency" | "percent" | "datetime" | "date" | "time";
-export type ValidatorTag = "required" | "positive" | "nonEmpty" | "email" | "url";
-
-/** Base generada desde el esquema (.sot → schema.columns). */
 export interface ColumnMeta {
-    column: string;                     // <- nombre de columna (antes id)
+    column: string;                 // nombre de columna
     kind: FieldKind;
-    options?: ReadonlyArray<SelectOption> | undefined; // para 'select'
-    format?: ValueFormat | undefined;
-    validators?: ReadonlyArray<ValidatorTag> | undefined;
+    options?: ReadonlyArray<SelectOption>;
+    format?: ValueFormat;
+    validators?: ReadonlyArray<ValidatorTag>;
 }
 
-// ——— Presets (entrada RAW) ———
+// —— Presets (entrada RAW) ——
 export type Align = "left" | "center" | "right";
 export type ViewMode = "compact" | "expanded";
 export type SortDirection = "asc" | "desc";
@@ -33,24 +21,25 @@ export interface SortSpec {
 
 /** Detalle por columna en catálogo (ORDER obligatorio). */
 export interface ColumnOverride {
-    column: string;                     // <- consistente con 'column'
-    label?: string | undefined;
-    visible?: boolean | undefined;
-    hidden?: boolean | undefined;
-    order: number;                      // <- OBLIGATORIO
-    widthPx?: number | undefined;
-    filterable?: boolean | undefined;
-    sortable?: boolean | undefined;
-    align?: Align | undefined;
-    tooltipText?: string | undefined;
-    defaultValue?: DataValue | undefined;
-    defaultSort?: SortDirection | undefined; // opcional: quién inicia el sort por defecto
+    column: string;                 // consistente con 'column'
+    label?: string;
+    visible?: boolean;
+    hidden?: boolean;
+    order: number;                  // OBLIGATORIO
+    widthPx?: number;
+    filterable?: boolean;
+    sortable?: boolean;
+    align?: Align;
+    tooltipText?: string;
+    defaultValue?: DataValue;
+    defaultSort?: SortDirection;    // quién inicia el sort por defecto
 }
 
 /** Catálogo detallado + vistas como lista de nombres de columna. */
 export interface TablePreset {
     catalog: ReadonlyArray<ColumnOverride>;
-    views: Readonly<Record<ViewMode, ReadonlyArray<string>>>; // lista de 'column'
+    // mapa por modo → lista de nombres de columna (en normalize reordenamos por 'order')
+    views: Record<ViewMode, ReadonlyArray<string>>;
 }
 
 /** SearchPreset como lista de nombres de columna. */
@@ -58,38 +47,37 @@ export interface SearchPreset {
     fields: ReadonlyArray<string>; // nombres de 'column'
 }
 
-// ——— Normalizado/Resuelto ———
-
+// —— Normalizado/Resuelto ——
 /** Columna final (fusión Meta + Catalog). Se usa DIRECTAMENTE en los componentes. */
 export interface ResolvedColumn {
     column: string;
     kind: FieldKind;
     label: string;
-    order: number;                      // <- mantenemos el order en resuelto
+    order: number;                  // mantenemos el order en resuelto
     visible: boolean;
-    widthPx?: number | undefined;
+    widthPx?: number;
     filterable: boolean;
     sortable: boolean;
-    align?: Align | undefined;
-    tooltipText?: string | undefined;
-    defaultValue?: DataValue | undefined;
+    align?: Align;
+    tooltipText?: string;
+    defaultValue?: DataValue;
 
     // Passthrough de meta (no se pierde nada):
-    options?: ReadonlyArray<SelectOption> | undefined;
-    format?: ValueFormat | undefined;
-    validators?: ReadonlyArray<ValidatorTag> | undefined;
+    options?: ReadonlyArray<SelectOption>;
+    format?: ValueFormat;
+    validators?: ReadonlyArray<ValidatorTag>;
 }
 
 /** Vista resuelta: subset de catálogo, ordenada por 'order' de catálogo. */
 export interface ViewResolved {
     columns: ReadonlyArray<ResolvedColumn>;
-    defaultSort?: SortSpec | undefined; // elegido por prioridad de 'defaultSort' de catálogo para las columnas de la vista
+    defaultSort?: SortSpec;
 }
 
 /** Preset de tabla resuelto completo. */
 export interface TablePresetResolved {
     catalog: ReadonlyArray<ResolvedColumn>;
-    views: Readonly<Record<ViewMode, ViewResolved>>;
+    views: Record<ViewMode, ViewResolved>;
 }
 
 /** Campo de búsqueda resuelto (tipo proviene de Meta). */
@@ -97,7 +85,7 @@ export interface SearchFieldResolved {
     column: string;
     label: string;
     type: FieldKind;
-    options?: ReadonlyArray<SelectOption> | undefined;
+    options?: ReadonlyArray<SelectOption>;
 }
 
 /** Search resuelto. */
@@ -109,5 +97,5 @@ export interface SearchPresetResolved {
 export interface UiProjection {
     columns: ReadonlyArray<ResolvedColumn>;
     filters: ReadonlyArray<SearchFieldResolved>;
-    defaultSort?: SortSpec | undefined; // de la vista activa
+    defaultSort?: SortSpec | undefined;
 }

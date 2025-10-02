@@ -52,12 +52,9 @@ function visibleFromFlags(catalog?: ColumnOverride): boolean {
 
 function defaultAlignFor(kind: ColumnMeta["kind"]): Align {
     switch (kind) {
-        case "number":
-            return "right";
-        case "boolean":
-            return "center";
-        default:
-            return "left";
+        case "number": return "right";
+        case "boolean": return "center";
+        default: return "left";
     }
 }
 
@@ -75,7 +72,6 @@ function resolveAlign(kind: ColumnMeta["kind"], catalog?: ColumnOverride): Align
 }
 
 function resolveSortable(kind: ColumnMeta["kind"], catalog?: ColumnOverride): boolean {
-    // Permitimos ordenar por defecto
     return catalog?.sortable ?? true;
 }
 
@@ -87,11 +83,10 @@ function pickDefaultSortForView(
     catalogIndex: Record<string, ColumnOverride>,
     viewColumns: ReadonlyArray<ResolvedColumn>
 ): SortSpec | undefined {
-    // Primera columna de la vista que tenga defaultSort en el catálogo
     for (const col of viewColumns) {
         const dir = catalogIndex[col.column]?.defaultSort;
         if (dir) {
-            return {column: col.column, direction: dir};
+            return { column: col.column, direction: dir };
         }
     }
     return undefined;
@@ -114,9 +109,7 @@ export function normalizeTablePreset(
         if (typeof entry.order !== "number" || Number.isNaN(entry.order)) {
             throw new Error(`Preset error: 'order' es obligatorio y debe ser numérico en catalog para '${columnName}'.`);
         }
-
         catalogIndex[columnName] = entry;
-
         return {
             column: columnName,
             kind: metaEntry.kind,
@@ -129,7 +122,6 @@ export function normalizeTablePreset(
             align: resolveAlign(metaEntry.kind, entry),
             tooltipText: entry.tooltipText,
             defaultValue: entry.defaultValue,
-
             // Passthrough de Meta:
             options: metaEntry.options,
             format: metaEntry.format,
@@ -137,11 +129,12 @@ export function normalizeTablePreset(
         };
     });
 
-    // Ordenar catálogo por 'order' (y por nombre para estabilidad si empatan)
-    catalogResolved.sort((a, b) => (a.order !== b.order ? a.order - b.order : a.column.localeCompare(b.column)));
+    // Ordenar por 'order' (y nombre para estabilidad)
+    catalogResolved.sort((a, b) =>
+        a.order !== b.order ? a.order - b.order : a.column.localeCompare(b.column)
+    );
 
-    // —— Views: listas de strings; validamos y resolvemos como subset del catálogo,
-    //           y mantenemos el ORDEN del CATÁLOGO (no el del array de la vista)
+    // —— Views: subset del catálogo, manteniendo el orden del catálogo
     const viewsResolved: Record<ViewMode, ViewResolved> = {} as Record<ViewMode, ViewResolved>;
     const viewModes = Object.keys(preset.views) as ReadonlyArray<ViewMode>;
 
@@ -149,21 +142,18 @@ export function normalizeTablePreset(
         const list = preset.views[mode];
         validateNoDuplicates(list, `views.${mode}`);
 
-        // Validar que cada columna exista en el catálogo:
         for (const name of list) {
             if (!catalogIndex[name]) {
                 throw new Error(`Preset error: la columna '${name}' en views.${mode} no está declarada en catalog.`);
             }
         }
 
-        // Subset del catálogo, manteniendo su orden natural (por 'order')
         const subset = catalogResolved.filter((c) => list.includes(c.column));
-
         const defaultSort = pickDefaultSortForView(catalogIndex, subset);
-        viewsResolved[mode] = {columns: subset, defaultSort};
+        viewsResolved[mode] = { columns: subset, defaultSort };
     }
 
-    return {catalog: catalogResolved, views: viewsResolved};
+    return { catalog: catalogResolved, views: viewsResolved };
 }
 
 export function normalizeSearchPreset(
@@ -175,7 +165,6 @@ export function normalizeSearchPreset(
     const catalogByColumn: Record<string, ResolvedColumn> = {};
     for (const c of catalogResolved) catalogByColumn[c.column] = c;
 
-    // Validación de duplicados + existencia
     const seen = new Set<string>();
     const fields: SearchFieldResolved[] = [];
 
@@ -197,8 +186,7 @@ export function normalizeSearchPreset(
 
         const base = catalogByColumn[columnName];
         if (base && base.filterable === false) {
-            // Si el catálogo marca no filtrable, la excluimos sin romper
-            continue;
+            continue; // respetar 'filterable: false'
         }
 
         fields.push({
@@ -209,5 +197,5 @@ export function normalizeSearchPreset(
         });
     }
 
-    return {fields};
+    return { fields };
 }
