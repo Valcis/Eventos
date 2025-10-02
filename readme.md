@@ -32,8 +32,8 @@ Aplicación para gestión de eventos.
 - TypeScript 5
 - React 18
 - TailwindCSS
-- Vite / Next.js (según configuración actual)
-- Prisma (pendiente de configuración)
+- Vite
+- Zod
 
 ## Flujo de ramas
 

@@ -51,7 +51,7 @@ export function list<T>(name: TableName): T[] {
  */
 export function getById<T extends BaseEntity>(name: TableName, id: T["id"]): T | undefined {
     const all = readAll<T>(name);
-    return all.find(it => (it as unknown as BaseEntity).id === id);
+    return all.find(it => (it as BaseEntity).id === id);
 }
 
 /**
@@ -65,12 +65,12 @@ export function create<T extends BaseEntity>(
 ): T {
     const createdAt = nowIso();
     const entity: T = {
-        ...(data as unknown as T),
+        ...data,
         id: genId(),
         createdAt,
         updatedAt: createdAt,
         isActive: true,
-    };
+    } as T;
 
     const all = readAll<T>(name);
     writeAll<T>(name, [...all, entity]);
@@ -89,14 +89,14 @@ export function update<T extends BaseEntity>(
     const all = readAll<T>(name);
     let changed = false;
     const next = all.map(item => {
-        const base = item as unknown as BaseEntity;
+        const base = item as BaseEntity;
         if (base.id !== id) return item;
         changed = true;
         const merged = {
             ...item,
             ...(patch as Partial<T>),
             updatedAt: nowIso(),
-        };
+        } as T;
         return merged;
     });
     if (changed) {

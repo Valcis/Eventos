@@ -26,13 +26,13 @@ export function useLocalRepo<T extends BaseEntity>(name: TableName): UseLocalRep
     }, [name]);
 
     const create = useCallback((data: NewEntity<T>): T => {
-        const created = db.create<T>(name, data as Omit<T, BaseKeys> as T);
+        const created = db.create<T>(name, data);
         refresh();
         return created;
     }, [name, refresh]);
 
     const update = useCallback((id: T["id"], patch: UpdatePatch<T>): void => {
-        db.update<T>(name, id, patch as Partial<T>); // db.update devuelve void
+        db.update<T>(name, id, patch);
         refresh();
     }, [name, refresh]);
 
