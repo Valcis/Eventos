@@ -25,8 +25,8 @@ function DataTable<Row extends Record<string, unknown>>({
                                                             renderActions,
                                                             hideHeader = false,
                                                         }: DataTableProps<Row>): JSX.Element {
-    const safeRows: Row[] = rows ?? [];
-    const safeColumns: ColumnDef<Row>[] = (columns ?? []).map((column, index) => {
+    const safeRows: Row[] = rows ? [...rows] as Row[] : [];
+    const safeColumns: ColumnDef<Row>[] = (columns ? [...columns] : []).map((column, index) => {
         const columnId =
             (column.id as string | undefined) ??
             (typeof column.accessorKey === 'string' ? column.accessorKey : undefined) ??
@@ -198,8 +198,8 @@ function DataTable<Row extends Record<string, unknown>>({
                     page={page}
                     pageSize={pageSize}
                     total={totalItems}
-                    onPageChange={onPageChange}
-                    onPageSizeChange={onPageSizeChange}
+                    onPageChange={onPageChange ?? (() => {})}
+                    onPageSizeChange={onPageSizeChange ?? (() => {})}
                     isCompact={effectiveDensity === 'compact'}
                 />
             </div>

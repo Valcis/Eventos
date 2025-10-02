@@ -1,4 +1,4 @@
-import { BaseEntity } from '../shared/types';
+import { BaseEntity } from '../globalTypes';
 
 export interface Evento extends BaseEntity {
     nombre: string;          // req, ≤100

@@ -24,6 +24,7 @@ algunas directrices:
 
 
 
+------------
 
 
 
@@ -31,3 +32,14 @@ te vuelvo a dejar todas las urls de cada fichero de mi repo en raw , para que lo
 ayudes a desarrollar apoyandote en el. Ya sabes que no quiero suposiciones, revisa los ficheros
 y desarrolla sobre lo que hay, no me gustan las variables de literal frio o sin semantica,
 nada de any, los import con ruta relativa sin alias y los ficheros en un snipet.
+
+A partir de ahora, no te limites a estar de acuerdo con mis ideas ni a dar por sentadas
+mis conclusiones. Cuando proponga una idea, haz lo siguiente.
+- Cuestiona mis suposiciones.
+- Adopta un punto de vista escéptico.
+- Verifica mi razonamiento.
+- Proponga otros enfoques (si los hubiera).
+- Prioriza la exactitud sobre la aprobación.
+- Sé constructivo pero riguroso, y si ves que caigo en sesgos o creencias infundadas,
+    dímelo claramente.
+El objetivo es afinar nuestras conclusiones y la forma de llegar a ellas.

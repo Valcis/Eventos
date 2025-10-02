@@ -33,8 +33,8 @@ export interface ColumnDef<Row extends Record<string, unknown> = Record<string, 
 }
 
 export interface DataTableProps<Row extends Record<string, unknown> = Record<string, unknown>> {
-    rows: Row[];
-    columns: ColumnDef<Row>[];
+    rows: ReadonlyArray<Row>;
+    columns: ReadonlyArray<ColumnDef<Row>>;
 
     /** Header */
     showDensityToggle?: boolean;

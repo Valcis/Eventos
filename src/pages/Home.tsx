@@ -23,7 +23,14 @@ export default function Home() {
             return;
         }
         setIsSubmitting(true);
-        const nuevo = create(parsed.data as any);
+        const d = parsed.data;
+        const nuevo = create({
+            nombre: d.nombre,
+            fecha: d.fecha,
+            ...(typeof d.direccion !== 'undefined' ? { direccion: d.direccion } : {}),
+            ...(typeof d.presupuesto !== 'undefined' ? { presupuesto: d.presupuesto } : {}),
+            ...(typeof d.aforoMaximo !== 'undefined' ? { aforoMaximo: d.aforoMaximo } : {}),
+        });
         setIsSubmitting(false);
         setIsOpen(false);
         nav(`/eventos/${nuevo.id}`);

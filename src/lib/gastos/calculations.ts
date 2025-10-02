@@ -1,23 +1,17 @@
 import type {Gasto} from './types';
 
-export function calcularGasto(g: Pick<Gasto>): {
+export function calcularGasto(g: Pick<Gasto, 'tipoIVA' | 'tipoPrecio' | 'precioBase' | 'precioNeto'>): {
     base: number;
     iva: number;
     total: number;
 } {
     const ivaPct = (g.tipoIVA ?? 0) / 100;
-    if (g.tipoPrecio === 'bruto') {
-        const total = g.total;
-        const base = ivaPct > 0 ? total / (1 + ivaPct) : total;
-        const iva = total - base;
-        return {base, iva, total};
-    }
-    const base = g.base;
+    const base = g.precioBase ?? 0;
     const iva = base * ivaPct;
-    const total = base + iva;
-    return {base, iva, total};
+    const total = g.tipoPrecio === 'con IVA' ? (g.precioNeto ?? base + iva) : base + iva;
+    return { base, iva, total };
 }
 
-export function gastoAcumulado(gastos: Gasto[]): number {
-    return gastos.reduce((sum, g) => sum + g.total, 0);
+export function gastoAcumulado(gastos: ReadonlyArray<Gasto>): number {
+    return gastos.reduce((sum, g) => sum + calcularGasto(g).total, 0);
 }
