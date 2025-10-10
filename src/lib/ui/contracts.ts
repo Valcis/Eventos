@@ -55,10 +55,12 @@ export interface ResolvedColumn {
     label: string;
     order: number;                  // mantenemos el order en resuelto
     visible: boolean;
-    widthPx?: number;
     filterable: boolean;
     sortable: boolean;
+
+    // 👇 Deben ser OPCIONALES si pueden faltar
     align?: Align;
+    widthPx?: number;
     tooltipText?: string;
     defaultValue?: DataValue;
 

@@ -33,6 +33,8 @@ ayudes a desarrollar apoyandote en el. Ya sabes que no quiero suposiciones, revi
 y desarrolla sobre lo que hay, no me gustan las variables de literal frio o sin semantica,
 nada de any, los import con ruta relativa sin alias y los ficheros en un snipet.
 
+
+
 A partir de ahora, no te limites a estar de acuerdo con mis ideas ni a dar por sentadas
 mis conclusiones. Cuando proponga una idea, haz lo siguiente.
 - Cuestiona mis suposiciones.

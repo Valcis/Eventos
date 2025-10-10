@@ -1,9 +1,9 @@
 // src/pages/evento/Selectores.tsx
 import React from "react";
-import { useParams } from "react-router-dom";
+import {useParams} from "react-router-dom";
 import SelectorsCard from "../../components/SelectorsCard";
-import type { ColumnDef } from "../../components/ui/DataTable/types";
-import { getUiForEntity, type Entity } from "../../lib/ui/facade";
+import type {ColumnDef} from "../../components/ui/DataTable/types";
+import {getUiForEntity, type Entity} from "../../lib/ui/facade";
 
 type Kind =
     | "comerciales"
@@ -82,6 +82,8 @@ export default function SelectoresPage(): JSX.Element {
                 {KINDS.map((kind) => {
                     // 1) columnas desde UI (vista compact para card)
                     const ui = getUiForEntity(kind as unknown as Entity, "compact");
+
+                    console.log("selectores ui", ui);
                     const columns: ReadonlyArray<ColumnDef<Row>> = ui.columns.map((c) => toColumnDef(c));
 
                     // 2) filas desde localdb para este evento y kind

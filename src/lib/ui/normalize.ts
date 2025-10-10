@@ -52,9 +52,12 @@ function visibleFromFlags(catalog?: ColumnOverride): boolean {
 
 function defaultAlignFor(kind: ColumnMeta["kind"]): Align {
     switch (kind) {
-        case "number": return "right";
-        case "boolean": return "center";
-        default: return "left";
+        case "number":
+            return "right";
+        case "boolean":
+            return "center";
+        default:
+            return "left";
     }
 }
 
@@ -86,7 +89,7 @@ function pickDefaultSortForView(
     for (const col of viewColumns) {
         const dir = catalogIndex[col.column]?.defaultSort;
         if (dir) {
-            return { column: col.column, direction: dir };
+            return {column: col.column, direction: dir};
         }
     }
     return undefined;
@@ -96,7 +99,8 @@ export function normalizeTablePreset(
     meta: ReadonlyArray<ColumnMeta>,
     preset: TablePreset
 ): TablePresetResolved {
-    const metaByColumn = indexMeta(meta);
+    const metaByColumn: Record<string, ColumnMeta> = indexMeta(meta);
+
 
     // —— Catalog: validar y normalizar
     const catalogIndex: Record<string, ColumnOverride> = {};
@@ -115,18 +119,17 @@ export function normalizeTablePreset(
             kind: metaEntry.kind,
             label: resolveLabel(columnName, entry),
             order: entry.order,
-            visible: visibleFromFlags(entry),
-            widthPx: entry.widthPx,
-            filterable: resolveFilterable(entry),
-            sortable: resolveSortable(metaEntry.kind, entry),
-            align: resolveAlign(metaEntry.kind, entry),
-            tooltipText: entry.tooltipText,
-            defaultValue: entry.defaultValue,
-            // Passthrough de Meta:
-            options: metaEntry.options,
-            format: metaEntry.format,
-            validators: metaEntry.validators,
-        };
+            visible: entry.hidden === true ? false : entry.visible === false ? false : true,
+            filterable: entry.filterable ?? true,
+            sortable: entry.sortable ?? true,
+            ...(entry.align !== undefined ? { align: entry.align } : {}),
+            ...(entry.widthPx !== undefined ? { widthPx: entry.widthPx } : {}),
+            ...(entry.tooltipText ? { tooltipText: entry.tooltipText } : {}),
+            ...(entry.defaultValue !== undefined ? { defaultValue: entry.defaultValue } : {}),
+            ...(metaEntry.options ? { options: metaEntry.options } : {}),
+            ...(metaEntry.format ? { format: metaEntry.format } : {}),
+            ...(metaEntry.validators ? { validators: metaEntry.validators } : {}),
+        } satisfies ResolvedColumn;
     });
 
     // Ordenar por 'order' (y nombre para estabilidad)
@@ -150,10 +153,11 @@ export function normalizeTablePreset(
 
         const subset = catalogResolved.filter((c) => list.includes(c.column));
         const defaultSort = pickDefaultSortForView(catalogIndex, subset);
-        viewsResolved[mode] = { columns: subset, defaultSort };
+        viewsResolved[mode] = {columns: subset,
+            ...(defaultSort ? { defaultSort } : {}),};
     }
 
-    return { catalog: catalogResolved, views: viewsResolved };
+    return {catalog: catalogResolved, views: viewsResolved};
 }
 
 export function normalizeSearchPreset(
@@ -193,9 +197,9 @@ export function normalizeSearchPreset(
             column: columnName,
             label: base?.label ?? titleCase(columnName),
             type: metaEntry.kind,
-            options: metaEntry.options,
+            ...(metaEntry.options ? {options: metaEntry.options} : {}),
         });
     }
 
-    return { fields };
+    return {fields};
 }
