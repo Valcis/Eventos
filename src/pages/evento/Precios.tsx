@@ -1,164 +1,78 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import DataTable from '../../components/ui/DataTable';
-import type {SortState} from '../../components/ui/DataTable/types';
-import Pagination from '../../components/ui/DataTable/Pagination';
-import FilterBar from '../../components/ui/FilterBar/FilterBar';
-import type {FilterValues, FilterField} from '../../components/ui/FilterBar/types';
-import {defaultCompare, getDirectionMultiplier, stableSort} from '../../lib/utils';
-import {preciosColumns, type PrecioItem} from '../../lib/tables/precios.columns';
+// src/pages/evento/Precios.tsx
+import React, { useMemo, useState } from "react";
+import { useParams } from "react-router-dom";
+import DataTable from "../../components/ui/DataTable";
+import type { ColumnDef, SortState } from "../../components/ui/DataTable/types";
+import FilterBar from "../../components/ui/FilterBar/FilterBar";
+import type { FilterValues } from "../../components/ui/FilterBar/types";
+import { getUiForEntity } from "../../lib/ui/facade";
+import type { UiProjection } from "../../lib/ui/contracts";
+import { useCrud } from "../../lib/useLocalRepo";
+import type { Precio } from "../../lib/precios/types";
 
-const MIN_ROWS_FOR_PAGINATION = 6; // aparece paginación si hay > 5 filas
+function asColumnDef(rc: UiProjection["columns"][number]): ColumnDef<Precio> {
+    return {
+        id: rc.column,
+        header: rc.label,
+        accessor: (row) => (row as Record<string, unknown>)[rc.column],
+        align: rc.align ?? "left",
+        isSortable: rc.sortable,
+    };
+}
 
-/**
- * Vista del tab "Precios" (capa visual). Los datos se inyectan localmente o por futura integración.
- */
-export default function Precios() {
-    // TODO: Integrar con fuente real de datos. Por ahora, array vacío para no romper.
-    const [rows] = useState<PrecioItem[]>([]);
+function applyFilters(rows: readonly Precio[], filters: FilterValues): Precio[] {
+    const entries = Object.entries(filters);
+    if (entries.length === 0) return rows.slice();
+    return rows.filter((row) =>
+        entries.every(([key, val]) => {
+            const v = (row as unknown as Record<string, unknown>)[key];
+            if (val === "" || val === null || typeof val === "undefined") return true;
+            if (typeof val === "number") return Number(v) === val;
+            if (typeof val === "boolean") return Boolean(v) === val;
+            if (typeof val === "string" && /^\d{4}-\d{2}-\d{2}$/.test(val)) {
+                const iso = String(v ?? "");
+                return iso.startsWith(val);
+            }
+            const left = String(v ?? "").toLowerCase();
+            const right = String(val).toLowerCase();
+            return left.includes(right);
+        })
+    );
+}
+
+export default function Precios(): JSX.Element {
+    const { id: eventoId } = useParams<{ id: string }>();
+    const { items } = useCrud<Precio>("precios");
+
+    const ui = useMemo(() => getUiForEntity("precios", "compact"), []);
+    const columns: ReadonlyArray<ColumnDef<Precio>> = useMemo(
+        () => ui.columns.map(asColumnDef),
+        [ui.columns]
+    );
+
     const [filters, setFilters] = useState<FilterValues>({});
-    const [sort, setSort] = useState<SortState>({columnId: null, direction: null});
-    const [isFiltersOpen, setIsFiltersOpen] = useState<boolean>(false); // por defecto ocultos
-    const [page, setPage] = useState<number>(1);
-    const [pageSize, setPageSize] = useState<number>(10);
-
-    // Definición de campos filtrables (se puede mover a config si se reutiliza fuera)
-    const filterFields = useMemo<FilterField<PrecioItem>[]>(
-        () => [
-            {id: 'nombre', label: 'Nombre', type: 'text'},
-            {id: 'categoria', label: 'Categoría', type: 'select', options: []},
-            {id: 'moneda', label: 'Moneda', type: 'select', options: []},
-            {id: 'importe', label: 'Importe mínimo', type: 'number'},
-            {id: 'isActivo', label: 'Activo', type: 'boolean'},
-        ],
-        [],
+    const filteredByEvent = useMemo(
+        () => items.filter((p) => p.eventoId === eventoId),
+        [items, eventoId]
+    );
+    const filteredRows = useMemo(
+        () => applyFilters(filteredByEvent, filters),
+        [filteredByEvent, filters]
     );
 
-    // Valores derivados para selects (categoría/moneda) a partir de los datos
-    const dynamicSelects = useMemo(() => {
-        const categorias = Array.from(new Set(rows.map((r) => r.categoria))).sort();
-        const monedas = Array.from(new Set(rows.map((r) => r.moneda))).sort();
-        return {
-            categorias: categorias.map((c) => ({label: c, value: c})),
-            monedas: monedas.map((m) => ({label: m, value: m})),
-        };
-    }, [rows]);
-
-    // Inyectar opciones dinámicas en los fields (sin re-crear referencias)
-    const effectiveFields = useMemo(
-        () =>
-            filterFields.map((f) => {
-                if (f.id === 'categoria') return {...f, options: dynamicSelects.categorias};
-                if (f.id === 'moneda') return {...f, options: dynamicSelects.monedas};
-                return f;
-            }),
-        [filterFields, dynamicSelects],
-    );
-
-    // Pipeline: filtros → orden → paginación
-    const filtered = useMemo(() => {
-        return rows.filter((r) => {
-            // nombre (contains)
-            const nombre = String(filters['nombre'] ?? '')
-                .trim()
-                .toLowerCase();
-            if (nombre && !r.nombre.toLowerCase().includes(nombre)) return false;
-            // categoria (equals)
-            const cat = String(filters['categoria'] ?? '');
-            if (cat && r.categoria !== cat) return false;
-            // moneda (equals)
-            const mon = String(filters['moneda'] ?? '');
-            if (mon && r.moneda !== mon) return false;
-            // importe mínimo (gte)
-            const min = filters['importe'];
-            if (typeof min === 'number' && r.importe < min) return false;
-            // activo (equals)
-            const act = filters['isActivo'];
-            if (typeof act === 'boolean' && r.isActivo !== act) return false;
-            return true;
-        });
-    }, [rows, filters]);
-
-    const sorted = useMemo(() => {
-        if (!sort.columnId || !sort.direction) return filtered;
-        const col = preciosColumns.find((c) => String(c.id) === sort.columnId);
-        if (!col) return filtered;
-        const dir = getDirectionMultiplier(sort.direction);
-        return stableSort(filtered, (a, b) => {
-            if (col.sortFn) return col.sortFn(a, b, sort.direction!);
-            const getVal = (row: PrecioItem) =>
-                col.accessor
-                    ? col.accessor(row)
-                    : // usamos la id de la columna como key del row
-                    (row)[col.id as keyof PrecioItem];
-
-            const va = getVal(a);
-            const vb = getVal(b);
-
-            return defaultCompare(va, vb) * dir;
-        });
-    }, [filtered, sort]);
-
-    const paged = useMemo(() => {
-        const start = (page - 1) * pageSize;
-        return sorted.slice(start, start + pageSize);
-    }, [sorted, page, pageSize]);
-
-    // Reset de página al cambiar filtros/orden
-    useEffect(() => setPage(1), [filters, sort]);
-
-    const shouldShowPagination = filtered.length >= MIN_ROWS_FOR_PAGINATION;
+    const [sort, setSort] = useState<SortState>({ columnId: null, direction: null });
 
     return (
         <div className="space-y-4">
-            {/* Toolbar con título + botón para mostrar/ocultar filtros */}
-
-            <FilterBar<PrecioItem>
-                title="Filtros de Precios"
-                fields={effectiveFields}
-                values={filters}
-                onChange={setFilters}
-                isInline
-                isCollapsible
-                isOpen={isFiltersOpen}
-                onToggle={setIsFiltersOpen}
+            <FilterBar fields={ui.filters} values={filters} onChange={setFilters} title="Filtros de precios" />
+            <DataTable<Precio>
+                rows={filteredRows}
+                columns={columns}
+                sort={sort}
+                onSortChange={setSort}
+                density="compact"
+                emptyState={<span className="text-gray-500">No hay precios</span>}
             />
-
-            {/* Card de la tabla */}
-            <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200">
-                    <h3 className="text-base font-semibold text-zinc-800">
-                        Precios <span className="text-sm font-normal text-zinc-500">({filtered.length})</span>
-                    </h3>
-                    <button
-                        type="button"
-                        className="text-sm px-3 py-2 rounded-xl border border-indigo-500 text-indigo-600 hover:bg-indigo-50"
-                        onClick={() => {
-                            // Llama aquí a tu modal existente
-                            // ej: openPrecioModal();
-                        }}
-                    >
-                        Crear
-                    </button>
-                </div>
-
-                <DataTable<PrecioItem>
-                    rows={paged}
-                    columns={preciosColumns}
-                    sort={sort}
-                    onSortChange={setSort}
-                    emptyState={<span>No hay precios que coincidan con los filtros.</span>}
-                />
-            </div>
-
-            {shouldShowPagination && (
-                <Pagination
-                    page={page}
-                    pageSize={pageSize}
-                    total={filtered.length}
-                    onPageChange={setPage}
-                    onPageSizeChange={setPageSize}
-                />
-            )}
         </div>
     );
 }

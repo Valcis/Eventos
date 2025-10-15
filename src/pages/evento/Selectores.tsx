@@ -1,36 +1,106 @@
-import * as React from 'react';
-import { useState } from 'react';
-import type { SelectorKind } from '../../types/selectores';
-import { SELECTOR_CONFIG } from '../../features/selectors/config';
-import SelectorsCard from '../../features/selectors/SelectorsCard';
+// src/pages/evento/Selectores.tsx
+import React from "react";
+import {useParams} from "react-router-dom";
+import SelectorsCard from "../../components/SelectorsCard";
+import type {ColumnDef} from "../../components/ui/DataTable/types";
+import {getUiForEntity, type Entity} from "../../lib/ui/facade";
+
+type Kind =
+    | "comerciales"
+    | "metodosPago"
+    | "pagadores"
+    | "tiendas"
+    | "unidades"
+    | "tipoConsumo"
+    | "receptorCobrador"
+    | "puntosRecogida";
+
+const KINDS: ReadonlyArray<Kind> = [
+    "comerciales",
+    "metodosPago",
+    "pagadores",
+    "tiendas",
+    "unidades",
+    "tipoConsumo",
+    "receptorCobrador",
+    "puntosRecogida",
+];
+
+type Row = {
+    id: string;
+    nombre: string;
+    isActive: boolean;
+    notas?: string;
+    [k: string]: unknown;
+};
+
+function kindToTitle(kind: Kind): string {
+    const map: Record<Kind, string> = {
+        comerciales: "Comerciales",
+        metodosPago: "Métodos de pago",
+        pagadores: "Pagadores",
+        tiendas: "Tiendas",
+        unidades: "Unidades",
+        tipoConsumo: "Tipo de consumo",
+        receptorCobrador: "Receptor/Cobrador",
+        puntosRecogida: "Puntos de recogida",
+    };
+    return map[kind];
+}
+
+// Adaptador ResolvedColumn → ColumnDef<Row>, con fallback requireReceptor/requiereReceptor
+function toColumnDef(rc: { column: string; label: string; align?: "left" | "center" | "right" }): ColumnDef<Row> {
+    return {
+        id: rc.column,
+        header: rc.label,
+        accessor: (row) => {
+            if (rc.column === "requireReceptor") {
+                const a = (row as Record<string, unknown>)["requireReceptor"];
+                const b = (row as Record<string, unknown>)["requiereReceptor"];
+                return typeof a === "boolean" ? a : typeof b === "boolean" ? b : undefined;
+            }
+            return (row as Record<string, unknown>)[rc.column];
+        },
+        align: rc.align ?? "left",
+        isSortable: true,
+    };
+}
 
 export default function SelectoresPage(): JSX.Element {
-  // TODO: eventId real desde router/context/params
-  const [eventId] = useState<string>('demo');
-  const [query, setQuery] = useState<string>('');
+    const params = useParams<{ eventId: string }>();
+    const eventId = params.eventId ?? "";
 
-  const kinds = Object.keys(SELECTOR_CONFIG) as SelectorKind[];
+    return (
+        <div className="space-y-6">
+            <header>
+                <h2 className="text-xl font-semibold">Selectores</h2>
+                <p className="text-sm text-gray-600">Administración de los Selectores.</p>
+            </header>
 
-  return (
-    <div className="p-4 md:p-6">
-      <header className="mb-4 flex items-center gap-2">
-        <h1 className="text-2xl font-semibold">Selectores</h1>
-        <div className="ml-auto w-full max-w-md">
-          <input
-            aria-label="Buscar en selectores"
-            className="w-full rounded-xl border px-3 py-2 outline-none focus:ring"
-            placeholder="Buscar en todas las listas…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+            {/* Grid 3 columnas (xl) → 2 columnas (sm/md). 3×3 → 2×4 con 8 cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                {KINDS.map((kind) => {
+                    // 1) columnas desde UI (vista compact para card)
+                    const ui = getUiForEntity(kind as unknown as Entity, "compact");
+
+                    console.log("selectores ui", ui);
+                    const columns: ReadonlyArray<ColumnDef<Row>> = ui.columns.map((c) => toColumnDef(c));
+
+                    // 2) filas desde localdb para este evento y kind
+                    const rows: ReadonlyArray<Row> = eventId
+                        ? (getSelectors(eventId, kind as unknown as SelectorKind) as Row[])
+                        : [];
+
+                    return (
+                        <SelectorsCard<Row>
+                            key={kind}
+                            title={kindToTitle(kind)}
+                            columns={columns}
+                            rows={rows}
+                        />
+                    );
+                })}
+            </div>
         </div>
-      </header>
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {kinds.map((kind) => (
-          <SelectorsCard key={kind} kind={kind} eventId={eventId} query={query} />
-        ))}
-      </div>
-    </div>
-  );
+    );
 }

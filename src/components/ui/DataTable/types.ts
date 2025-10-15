@@ -1,81 +1,75 @@
+// src/components/ui/DataTable/types.ts
 import {ReactNode} from 'react';
 
 export type Align = 'left' | 'center' | 'right';
+export type Density = 'compact' | 'normal';
+export type DensityMode = 'detailed' | 'simple';
+export type CellValue = string | number | boolean | null | undefined | Date | ReactNode;
 
 export interface SortState {
     columnId: string | null;
     direction: 'asc' | 'desc' | null;
 }
 
-/** Util para callbacks bivariantes (como hacen los handlers de React) */
-type BivariantCallback<T extends (...args: any[]) => any> = {
-    bivarianceHack: T;
-}['bivarianceHack'];
+// Bivarianza segura sin any
+export type BivariantCallback<T> = { bivarianceHack: T }['bivarianceHack'];
 
-/**
- * Definición de columna genérica:
- * - Row: tipo de fila
- * - CellValue: tipo de valor que devuelve el accessor de esta columna
- */
-export interface ColumnDef<Row, CellValue = unknown> {
-    /** Identificador único de columna (se recomienda string estable) */
+export interface ColumnDef<Row extends Record<string, unknown> = Record<string, unknown>> {
     id?: keyof Row | string;
-
-    /** Cabecera (texto o nodo) */
     header: ReactNode;
-
-    /**
-     * Función para obtener el valor de celda desde la fila.
-     * Si se define, el tipo de `CellValue` será el de la celda y se propagará a `cell`.
-     */
     accessor?: (row: Row) => CellValue;
-
-    /**
-     * Clave de acceso directa (opcional, útil cuando Row es un objeto plano).
-     * Si se usa, `CellValue` se infiere como `unknown` en esta interfaz y
-     * deberá especificarse en la página si se quiere tipado fuerte.
-     */
-
-
     accessorKey?: string;
-
-    /**
-     * Bivariante: permite que `cell` acepte un subtipo/supertipo sin romper asignabilidad
-     * Render de la celda con tipos fuertes:
-     * - `value` es del tipo `CellValue` que devuelve `accessor`.
-     * - `row` es la fila completa (tipo `Row`).
-     */
-
     cell?: BivariantCallback<(value: CellValue, row: Row) => ReactNode>;
-
-
-    /** Ordenable en UI (client-side) */
     isSortable?: boolean;
-
-    /**
-     * Comparador opcional específico de la columna.
-     * Si no se proporciona, se usa un comparador genérico por tipo.
-     */
     sortFn?: (leftRow: Row, rightRow: Row, direction: 'asc' | 'desc') => number;
-
-    /** Presentación */
     width?: number | string;
     align?: Align;
+
+    /** Vista simple: mostrar solo estas + acciones */
+    isSimpleKey?: boolean;
+
+    /** Señaliza columna de acciones */
+    role?: 'actions';
 }
 
-export interface DataTableProps<Row> {
-    rows: Row[];
-    columns: Array<ColumnDef<Row, unknown>>;
+export interface DataTableProps<Row extends Record<string, unknown> = Record<string, unknown>> {
+    rows: ReadonlyArray<Row>;
+    columns: ReadonlyArray<ColumnDef<Row>>;
+
+    /** Header */
+    showDensityToggle?: boolean;
+    onCreate?: () => void;
+
+    /** Ordenación */
     sort?: SortState;
     onSortChange?: (next: SortState) => void;
-    emptyState?: ReactNode;
-    className?: string;
-    hideHeader?: boolean;
-    /** Compat: placeholder del filtro si se renderiza fuera */
-    globalFilterPlaceholder?: string;
-    /** Filtro global controlado (opcional) */
+
+    /** Densidad visual de filas */
+    density?: Density;
+    /** Compat: si llega, se traduce a Density */
+    isDense?: boolean;
+
+    /** Vista de columnas (simple/detallada). Si no se pasa, no se usa */
+    densityMode?: DensityMode;
+
+    /** Filtro global (si lo usas fuera) */
     globalFilterValue?: string;
     onGlobalFilterChange?: (value: string) => void;
-    /** Densidad visual */
-    density?: 'compact' | 'normal';
+
+    /** Apariencia */
+    className?: string;
+    emptyState?: ReactNode;
+
+    /** Paginación (client-side por defecto) */
+    page?: number; // 1-based
+    pageSize?: number;
+    total?: number; // si no se pasa, se usa rows.length
+    onPageChange?: (page: number) => void;
+    onPageSizeChange?: (size: number) => void;
+
+    /** Acciones por fila */
+    renderActions?: (row: Row) => ReactNode;
+
+    /** Ocultar cabecera de columnas */
+    hideHeader?: boolean;
 }
